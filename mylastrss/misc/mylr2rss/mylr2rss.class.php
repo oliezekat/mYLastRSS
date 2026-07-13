@@ -35,8 +35,25 @@ class mYLR2RSS extends mYLastRSS
 	var $sources;
 	var $_MYLR_LAST_RESULT;
 	var $_MYLR_RESULT_ITEMS_LIMIT = 0;
+	var $_ENCLOSURE_ATTRIBUTES = array('url', 'length', 'type', 'duration','height','width');
 	
+	// To support Media RSS
+	// http://search.yahoo.com/mrss
+	var $enable_MediaRSS 			= TRUE; // Not use it... Will deprecated
+	var $_MRSS_ITEM_TAGS 			= array('media:title','media:description','media:text','media:credit','media:category','media:copyright','media:rating','media:keywords'); // Basics tags to support: 'media:content','media:thumbnail'
+	var $_MRSS_CHANNEL_TAGS			= array('media:rating');
+	var $_MRSS_CONTENT_ATTRIBUTES 	= array('url', 'type', 'height', 'width', 'duration', 'fileSize');
+	var $_MRSS_CONTENT_MIMES_TYPES 	= array('image/gif','image/jpeg','image/pjpeg','image/png','audio/mpeg','video/jpeg','video/mp4','video/quicktime','video/x-flv','application/x-shockwave-flash','video/x-msvideo','video/3gpp');
+	var $_MRSS_THUMBNAIL_ATTRIBUTES = array('url', 'type', 'height', 'width');
+	var $_MRSS_PLAYER_ATTRIBUTES 	= array('url', 'height', 'width');
+	var $_MRSS_CREDIT_ATTRIBUTES 	= array('role'); // Todo
+
 	// Private
+	function __construct()
+		{
+		return $this->mYLR2RSS();
+		}
+	
 	function mYLR2RSS()
 		{
 		parent::mYLastRSS();
@@ -312,12 +329,12 @@ class mYLR2RSS extends mYLastRSS
 					{
 					foreach($item['categories'] as $category)
 						{
-						if (trim($category) != '') echo("<category>".$category."</category>\n");
+						if (trim($category) != '') echo("<category><![CDATA[".htmlspecialchars($category)."]]></category>\n");
 						}
 					}
 				else if ($item['category'])
 					{
-					if (trim($category) != '') echo("<category>".$item['category']."</category>\n");
+					if (trim($category) != '') echo("<category><![CDATA[".htmlspecialchars($item['category'])."]]></category>\n");
 					}
 				if ($item['dc:subject'])
 					{
@@ -467,7 +484,7 @@ class mYLR2RSS extends mYLastRSS
 			}
 		}
 	
-	function Get($sources = '')
+	function Get($sources = '',$Reset=FALSE)
 		{
 		if ($sources == '')
 			{
@@ -486,7 +503,7 @@ class mYLR2RSS extends mYLastRSS
 				}
 
 			$this->_MYLR_LAST_RESULT = array();
-			if ($this->_MYLR_LAST_RESULT = parent::Get($sources))
+			if ($this->_MYLR_LAST_RESULT = parent::Get($sources,$Reset))
 				{
 				$this->sources = $sources;
 				}

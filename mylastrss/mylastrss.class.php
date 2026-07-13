@@ -76,27 +76,29 @@ class mYLastRSS
 	var $cache_feeds_if_failed	= FALSE;		// Set TRUE to save cache while one feed failed
 	var $incremental_cache_time = 1800; 		// 60 * 30 * 1 First source use $cache_time, second source use $cache_time+$incremental_cache_time, etc.
 	var $use_cache_if_failed 	= TRUE;			// Set TRUE to use cached file if feed request failed
-	var $min_items_required 	= 0; 			// Before to use last file cached
-	var $retry_delay			= 1200;			// 60 * 20 * 1 time wait before to try again. Require cache_dir.
-	var $query_limit			= 0;			// Limit number of queries to fetch feed content. Could need several queries per source. Set 0 to disable.
-	var $max_execution_time		= 0;			// set 0 to disable
 	
 	var $write_mode				= 'direct';		// How to save file : write 'direct' to destination filename, 'copy' or 'move' temporary file
 	var $writelock_ext			= '.wlock';		// Extension added to filename for write-locking feature (set blank to disable write-locking)
 	var $writelock_delay		= 0;			// Delay before to ignore write-locking (set zero to disable write-locking)
 	var $max_write_errors		= 1;			// Not try to write/copy/move file if reach this limit
 	
-	var $useSnoopy				= FALSE;		// Use Snoopy class to download feeds
-	var $userAgent				= 'mYLastRSS';	// For Snoopy
-	var $timeOut				= 0;			// For Snoopy, set 0 to disable... Unused if set max_execution_time
-	var $minTimeOut				= 3;			// minimal time-out per Snoopy request, used if set max_execution_time
+	var $transport				= '';			// Let blank to auto choose between fopen, WpRequests, Requests, or Snoopy.
+	var $query_limit			= 0;			// Limit number of HTTP queries to fetch feed content.
+	var $max_execution_time		= 0;			// Overall time allowed to process feeds. Set 0 to disable.
+	var $userAgent				= 'mYLastRSS';	// Used for Snoopy only
+	var $timeOut				= 0;			// Used for Snoopy only, set 0 to disable. Unused if set max_execution_time.
+	var $minTimeOut				= 6;			// minimal time-out per Snoopy request, used if set max_execution_time
+	var $min_items_required 	= 0; 			// Before to use last file cached
+	var $retry_delay			= 1200;			// 60 * 20 * 1 time wait before to try again. Require cache_dir.
+	
+	var $useSnoopy				= FALSE;		// deprecated
 	
 	// -------------------------------------------------------------------
 	// Private variables (Don't use them)
 	// -------------------------------------------------------------------
 	
 	// For RSS parsing
-	
+	var $rsscp = '';
 	var $channeltags 	= array(); // Now build at runtime for each feed
 	var $itemtags 		= array(); // Now build at runtime for each feed
 	
@@ -107,6 +109,8 @@ class mYLastRSS
 								'jpe'	=>	'image/jpeg',
 								'jpeg'	=>	'image/jpeg',
 								'png'	=>	'image/png',
+								'webp'	=>	'image/webp',
+								'avif'	=>	'image/avif',
 								'mp3'	=>	'audio/mpeg',
 								'mp4'	=>	'video/mp4',
 								'flv'	=>	'video/x-flv',
@@ -116,7 +120,7 @@ class mYLastRSS
 								);
 	// To support Media RSS
 	var $enable_MediaRSS = TRUE; // Deprecated
-	var $_MRSS_CONTENT_MIMES_TYPES 	= array('image/gif','image/jpeg','image/pjpeg','image/png','audio/mpeg','video/jpeg','video/mp4','video/quicktime','video/x-flv','application/x-shockwave-flash','video/x-msvideo','video/3gpp');
+	var $_MRSS_CONTENT_MIMES_TYPES 	= array('image/avif','image/webp','image/gif','image/jpeg','image/pjpeg','image/png','audio/mpeg','video/jpeg','video/mp4','video/quicktime','video/x-flv','application/x-shockwave-flash','video/x-msvideo','video/3gpp');
 		
 	// Internal global vars
 	var $_USE_SEVERAL_SOURCES 	= FALSE;
@@ -127,10 +131,16 @@ class mYLastRSS
 	var $_FWRITE_FAIL_COUNT		= 0;		// Amount of write/copy/move errors. Not reset between several request.
 	var $_HTML_ENTITIES_TRANS 	= array(); 	// Build into constructor method.
 	var $_LAST_ERROR_MESSAGES 	= array(); 	// Error messages (in english) which help to debug... Don't use if debugging is finished.
+	var $_EMOJIS_TRANS       	= array(); 	// Array to replace emojis (from UTF-8 content only).
 		
 	// -------------------------------------------------------------------
 	// Constructor
 	// -------------------------------------------------------------------
+	
+	function __construct()
+		{
+		return $this->mYLastRSS();
+		}
 	
 	function mYLastRSS()
 		{
@@ -156,11 +166,11 @@ class mYLastRSS
 	// -------------------------------------------------------------------
 	function _InitEntitiesArray()
 		{
-		if (!$this->_HTML_ENTITIES_TRANS)
+		if ((is_array($this->_HTML_ENTITIES_TRANS) === FALSE) OR (count($this->_HTML_ENTITIES_TRANS) === 0))
 			{
 			// Init _HTML_ENTITIES_TRANS array for unhtmlentities()
 			// Get HTML entities table
-			$this->_HTML_ENTITIES_TRANS = get_html_translation_table (HTML_ENTITIES, ENT_QUOTES);
+			$this->_HTML_ENTITIES_TRANS = get_html_translation_table (HTML_ENTITIES, ENT_QUOTES, 'ISO-8859-15'); // if default_charset is UTF-8
 			// Flip keys<==>values
 			$this->_HTML_ENTITIES_TRANS = array_flip ($this->_HTML_ENTITIES_TRANS);
 			
@@ -183,6 +193,9 @@ class mYLastRSS
 			$this->_HTML_ENTITIES_TRANS += array("&bull;" => '-');
 			$this->_HTML_ENTITIES_TRANS["&nbsp;"] = ' ';
 			$this->_HTML_ENTITIES_TRANS["&oelig;"] = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&#x153;"] = 'oe';
+			$this->_HTML_ENTITIES_TRANS += array("&"."#x202F;" => " ");
+			$this->_HTML_ENTITIES_TRANS["&hellip;"] = '...';
 			// Entities from OpenOffice
 			$this->_HTML_ENTITIES_TRANS += array("&rsquo;" => "'"); 
 			$this->_HTML_ENTITIES_TRANS += array("&lsquo;" => "'");
@@ -195,7 +208,7 @@ class mYLastRSS
 			$this->_HTML_ENTITIES_TRANS += array("&"."#x201C;" => '"');
 			$this->_HTML_ENTITIES_TRANS += array("&"."#x201D;" => '"');
 			$this->_HTML_ENTITIES_TRANS += array("&"."#x2026;" => "...");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x203A;" => "›");
+			$this->_HTML_ENTITIES_TRANS += array("&"."#x203A;" => ">");
 			// Entities from WordPress
 			$this->_HTML_ENTITIES_TRANS += array("&"."#8211;" => "-");
 			$this->_HTML_ENTITIES_TRANS += array("&"."#8216;" => "'");
@@ -232,22 +245,16 @@ class mYLastRSS
 					
 				$this->_HTML_ENTITIES_TRANS['&szlig;']	 = 'ß';
 				}
+			if (in_array(strtolower($this->cp),array('iso-8859-1','windows-1252')))
+				{
+				$this->_HTML_ENTITIES_TRANS["&euro;"]	 = '€';
+                $this->_HTML_ENTITIES_TRANS["&copy;"]	 = '©';
+				}
 			$this->_HTML_ENTITIES_TRANS["&#xa0;"]	 = ' ';
 			$this->_HTML_ENTITIES_TRANS["&#038;"]	 = '&';
 			$this->_HTML_ENTITIES_TRANS["&#39;"]	 = "'";
 			$this->_HTML_ENTITIES_TRANS["&#34;"]	 = '"';
 			$this->_HTML_ENTITIES_TRANS["&#339;"]	 = 'oe';
-			
-			// Convert special quotes
-			/*
-			$this->_HTML_ENTITIES_TRANS += array("`" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("´" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("‘" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("’" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("“" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("”" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("…" => "...");
-			*/
 			}
 		}
 		
@@ -273,7 +280,7 @@ class mYLastRSS
 			{
 			foreach ($namespaces as $xmlns)
 				{
-				if ($MYLR_XMLNS[$xmlns])
+				if (isset($MYLR_XMLNS[$xmlns]))
 					{
 					$this->channeltags	 = array_merge($this->channeltags,$MYLR_XMLNS[$xmlns]['channel_tags']);
 					$this->itemtags		 = array_merge($this->itemtags,$MYLR_XMLNS[$xmlns]['item_tags']);
@@ -282,17 +289,33 @@ class mYLastRSS
 			}
 		}
 	
+	function _InitEmojisArray()
+		{
+		if ((is_array($this->_EMOJIS_TRANS) === FALSE) OR (count($this->_EMOJIS_TRANS) === 0))
+			{
+            if (defined('MYLASTRSS_EMOJIS_PATH') and is_file(MYLASTRSS_EMOJIS_PATH))
+                {
+                $this->_EMOJIS_TRANS = require MYLASTRSS_EMOJIS_PATH;
+                }
+            if (is_array($this->_EMOJIS_TRANS) === FALSE)
+                {
+                $this->_EMOJIS_TRANS = array();
+                }
+            //todo emoj fin phrase avant ponctuation
+            }
+        }       
+                
 	function Init($Reset=FALSE,$Processor='unknown')
 		// Processor=unknown|none|rss|rdf|atom
 		{
 		if ($Reset)
 			{
-			$this->_HTML_ENTITIES_TRANS = array();
-			$this->channeltags = array();
-			$this->itemtags = array();
-			$this->_LAST_ERROR_MESSAGES = array();
-			$this->_SOURCES = array();
-			$this->_HTML_ENTITIES_TRANS = array();
+			$this->channeltags           = array();
+			$this->itemtags              = array();
+			$this->_LAST_ERROR_MESSAGES  = array();
+			$this->_SOURCES              = array();
+			$this->_HTML_ENTITIES_TRANS  = array();
+			$this->_EMOJIS_TRANS         = array();
 			}
 				
 		if ($this->cache_feed_dir == '') $this->cache_feed_dir = $this->cache_dir;
@@ -352,7 +375,7 @@ class mYLastRSS
 					}
 				else
 					{
-					$cache_file = $this->cache_feeds_dir.'/'.$this->cache_feeds_prefix.'_cache_'.md5(serialize($sourcesArray).'?limit='.$this->items_limit.'&html='.$this->stripHTML.'&date='.$this->date_format.'&cdata='.$this->CDATA.'&cp='.$this->cp);
+					$cache_file = $this->cache_feeds_dir.'/'.$this->cache_feeds_prefix.'_cache_'.md5(serialize($sources).'?limit='.$this->items_limit.'&html='.$this->stripHTML.'&date='.$this->date_format.'&cdata='.$this->CDATA.'&cp='.$this->cp);
 					}
 				}
 			}
@@ -361,6 +384,7 @@ class mYLastRSS
 			// TODO: support single feed
 			}
 			
+        clearstatcache(true, $cache_file);
 		if (($cache_file != '') AND (file_exists($cache_file) == FALSE))
 			{
 			$cache_file = '';
@@ -376,7 +400,7 @@ class mYLastRSS
 		if ($result)
 			{
 			$result['cached'] = 1;
-			$this->_SOURCES = $result['sources'];
+			$this->_SOURCES = (isset($result['sources']) ? $result['sources'] : []);
 			$result['updatedTime'] = filemtime($cache_file);
 			}
 			
@@ -384,7 +408,7 @@ class mYLastRSS
 		}
 	
 	/* Return array of HTML images attributes */
-	function fetchimg($content)
+	function fetchimg($content, $convert_encoding = TRUE)
 		{
 		$images = array();
 		$imgatts = array('src','height','width','alt','title');
@@ -398,7 +422,7 @@ class mYLastRSS
 				$image = array();
 				foreach($imgatts as $imgatt)
 					{
-					$temp = $this->my_preg_match("'$imgatt=[\'\"](.*?)[\'\"]'si", $imgcnt);
+					$temp = $this->my_preg_match("'$imgatt=[\'\"](.*?)[\'\"]'si", $imgcnt, $convert_encoding);
 					if ($temp != '') $image[$imgatt] = $temp; // Set only if not empty
 					}
 				$images[] = $image;
@@ -419,26 +443,23 @@ class mYLastRSS
 		if ($strict)
 			{
 			$string = str_replace(array('&amp;#038;','&amp;#38;','&amp;','&#x26;','&#38;','&#038;'),'&',$string);
+            $string = str_replace("&lt;&lt;",'«',$string);
+            $string = str_replace("&gt;&gt;",'»',$string);
 			}
 		
 		// Replace entities by values
 		$string = strtr ($string, $this->_HTML_ENTITIES_TRANS);
-		//$string = html_entity_decode($string,ENT_QUOTES,$this->cp);
 		
 		if (strtoupper($this->cp) == 'UTF-8')
 			{
-			$string = preg_replace('~&#([0-9]+);~e', 'mYLR_unichr("\\1")', $string);
+			$string = preg_replace_callback(
+				'~&#([0-9]+);~',
+				function ($matches) {
+					return mYLR_unichr($matches[1]);
+				},
+				$string
+				);
 			}
-		
-		// Remplace les entités numériques
-   		//$string = preg_replace('~&#x([0-9a-f]+);~ei', 'chr(hexdec("\\1"))', $string);
-    	//$string = preg_replace('~&#([0-9]+);~e', 'chr("\\1")', $string);
-		
-		// Fucking quotes :o|
-		//$string = str_replace(array('`','‘','’','´'),"'",$string);
-		//$string = str_replace(array('“','”'),'"',$string);
-		//$string = str_replace(array('…'),'...',$string);
-		
 		return $string;
 		}
 
@@ -460,6 +481,7 @@ class mYLastRSS
 				$cache_file = $this->cache_feeds_dir.'/'.$this->cache_feeds_prefix.'_cache_'.md5(serialize($sourcesArray).'?limit='.$this->items_limit.'&html='.$this->stripHTML.'&date='.$this->date_format.'&cdata='.$this->CDATA.'&cp='.$this->cp.'&kidx_rule='.$this->kidx_rule);
 				}
 			
+            clearstatcache(true, $cache_file);
 			if (($this->cache_time != 0) AND (file_exists($cache_file) == TRUE))
 				{
 				$timedif = (time() - filemtime($cache_file));
@@ -479,7 +501,7 @@ class mYLastRSS
 			else
 				{
 				// cached file is too old, create new
-				$result = $this->ParseFromSeveralSources($sourcesArray);
+				$result = $this->ParseFromSeveralSources();
 				
 				if ($result)
 					{
@@ -498,7 +520,7 @@ class mYLastRSS
 			}
 		else
 			{
-			$result = $this->ParseFromSeveralSources($sourcesArray);
+			$result = $this->ParseFromSeveralSources();
 			if ($result)
 				{
 				$result['sources'] = $this->_SOURCES;
@@ -533,7 +555,7 @@ class mYLastRSS
 		return str_replace(array(':','/','.','?','=','&',';','%','@','_','#','*'),'-',$urlPath);
 		}
 		
-	function ParseFromSeveralSources($sourcesArray)
+	function ParseFromSeveralSources()
 		{
 		$this->_USE_SEVERAL_SOURCES = TRUE;
 		$this->_STARTED_INDEX = 0;
@@ -566,6 +588,7 @@ class mYLastRSS
 				{
 				$cacheFilename = $this->_SourceCacheFileName($source_kidx,$this->items_limit,$this->stripHTML,$this->date_format,$this->CDATA,$this->cp,$this->kidx_rule);
 				$cache_file = $this->cache_feed_dir.'/'.$cacheFilename;
+                clearstatcache(true, $cache_file);
 				if (file_exists($cache_file))
 					{
 					$this->_SOURCES[$source_kidx]['cachedFileName']=$cacheFilename;
@@ -575,6 +598,7 @@ class mYLastRSS
 				
 				$errorFilename = 'mylr_content_'.$this->_URL2FileName($source['url']).'.txt';
 				$error_file = $this->cache_errors_dir.'/'.$errorFilename;
+                clearstatcache(true, $error_file);
 				if (file_exists($error_file))
 					{
 					$this->_SOURCES[$source_kidx]['errorFileName']=$errorFilename;
@@ -590,7 +614,7 @@ class mYLastRSS
 		$result['items'] = array(); // create array even if there are no items
 		$result['namespaces'] = array();
 		$i = 0;
-		$sources_nb = count($sourcesArray);
+		$sources_nb = count($this->_SOURCES);
 		foreach($this->_SOURCES as $source_kidx => $source)
 			{
 			//$source_kidx = $this->_SourceKIDX($source);
@@ -599,8 +623,17 @@ class mYLastRSS
 			// How many time we could allow to download this source ?
 			if ($this->max_execution_time !== 0)
 				{
-				$timeOut = ceil(($this->max_execution_time - (time() - $this->_STARTED_TIME)) / ($sources_nb - $i));
-				if ($this->timeOut < $this->minTimeOut)	$this->timeOut = $this->minTimeOut;
+				$elapsedTime = time() - $this->_STARTED_TIME;
+				$remainedTime = max(0,$this->max_execution_time - $elapsedTime);
+				if (0 < $this->query_limit)
+					{
+					$remainedQueries = min(max(1,$this->query_limit - $this->_QUERY_COUNT),$sources_nb - $i);
+					}
+				else
+					{
+					$remainedQueries = $sources_nb - $i;
+					}
+				$this->timeOut = max($this->minTimeOut,ceil($remainedTime / $remainedQueries));
 				}
 				
 			$oneresult = $this->GetFromOneSource($source['url'],$source_kidx);
@@ -613,23 +646,23 @@ class mYLastRSS
 				{
 				foreach($oneresult['items'] as $kidx => $item)
 					{
-					if ($item['category'] == '')
+					if (((isset($item['category']) === false) || ($item['category'] == '')) && isset($oneresult['category']))
 						{
 						$oneresult['items'][$kidx]['category'] = $oneresult['category'];
 						}
 						
-					if ($item['source'] != '')
+					if (isset($item['source']) && ($item['source'] != ''))
 						{
 						$oneresult['items'][$kidx]['source_orig'] = $item['source'];
 						}
-					$oneresult['items'][$kidx]['source'] = $oneresult['title'];
-					if ($item['source_url'] != '')
+					$oneresult['items'][$kidx]['source'] = (isset($oneresult['title']) ? $oneresult['title'] : '');
+					if (isset($item['source_url']) && ($item['source_url'] != ''))
 						{
 						$oneresult['items'][$kidx]['source_orig_url'] = $item['source_url'];
 						}
 					$oneresult['items'][$kidx]['source_url'] = $source['url'];
 					
-					$oneresult['items'][$kidx]['source_link'] = $oneresult['link'];
+					$oneresult['items'][$kidx]['source_link'] = (isset($oneresult['link']) ? $oneresult['link'] : '');
 					$oneresult['items'][$kidx]['source_kidx'] = $source_kidx;
 					}
 				
@@ -739,7 +772,7 @@ class mYLastRSS
 		
 		}
 		
-	function _SourceCacheFileName($kidx,$limit=0,$stripHTML,$dateFormat='',$CDATA,$CP,$kidx_rule='guid')
+	function _SourceCacheFileName($kidx,$limit,$stripHTML,$dateFormat,$CDATA,$CP,$kidx_rule='guid')
 		{
 		return $this->cache_feed_prefix.'_cache_'.md5($kidx.strtolower('?limit='.$limit.'&html='.$stripHTML.'&date='.$dateFormat.'&cdata='.$CDATA.'&cp='.$CP.'&kidx_rule='.$kidx_rule));
 		}
@@ -754,7 +787,7 @@ class mYLastRSS
 		// If CACHE ENABLED
 		if ($this->cache_feed_dir != '')
 			{
-			if ($this->_SOURCES[$source_kidx]['cachedFileName'])
+			if (isset($this->_SOURCES[$source_kidx]['cachedFileName']))
 				{
 				$cacheFilename = $this->_SOURCES[$source_kidx]['cachedFileName'];
 				$cache_file = $this->cache_feed_dir.'/'.$cacheFilename;
@@ -765,12 +798,13 @@ class mYLastRSS
 				{
 				$cacheFilename = $this->_SourceCacheFileName($source_kidx,$this->items_limit,$this->stripHTML,$this->date_format,$this->CDATA,$this->cp,$this->kidx_rule);
 				$cache_file = $this->cache_feed_dir.'/'.$cacheFilename;
+                clearstatcache(true, $cache_file);
 				$cacheFileExists = file_exists($cache_file);
 				$cacheFileTime = 0;
 				if ($cacheFileExists == TRUE) $cacheFileTime = filemtime($cache_file);
 				}
 			
-			if ($this->_SOURCES[$source_kidx]['errorFileName'])
+			if (isset($this->_SOURCES[$source_kidx]['errorFileName']))
 				{
 				$errorFilename = $this->_SOURCES[$source_kidx]['errorFileName'];
 				$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
@@ -781,6 +815,7 @@ class mYLastRSS
 				{
 				$errorFilename = 'mylr_content_'.$this->_URL2FileName($rss_url).'.txt';
 				$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
+                clearstatcache(true, $error_content_file);
 				$errorFileExists = file_exists($error_content_file);
 				$errorFileTime = 0;
 				if ($errorFileExists == TRUE) $errorFileTime = filemtime($error_content_file);
@@ -847,13 +882,19 @@ class mYLastRSS
 							$result['sources'][$source_kidx]['items_count']  = $result['items_count'];
 							$result['sources'][$source_kidx]['cached'] 	 	 = $result['cached'];
 							$result['sources'][$source_kidx]['updatedTime']  = $result['updatedTime'];
+							$result['sources'][$source_kidx]['encoding']	 = $result['encoding'];
 							$result['sources'][$source_kidx]['feed_format']	 = $result['feed_format'];
 							$result['sources'][$source_kidx]['generator']	 = $result['generator'];
 							$result['sources'][$source_kidx]['namespaces']	 = $result['namespaces'];
 							}
 						if (($this->_USE_SEVERAL_SOURCES == FALSE) OR ($this->cache_all == TRUE))
 							{
-							$this->_SaveCacheFileAs($cache_file,$result);
+							if ($this->_SaveCacheFileAs($cache_file,$result))
+                                {
+                                $errorFilename = 'mylr_content_'.$this->_URL2FileName($rss_url).'.txt';
+                                $error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
+                                @unlink($error_content_file);
+                                }
 							}
 						}
 					}
@@ -892,11 +933,12 @@ class mYLastRSS
 		
 		if ($result)
 			{
-			$this->_SOURCES[$source_kidx]['title'] 		 = $result['title'];
-			$this->_SOURCES[$source_kidx]['link'] 		 = $result['link'];
+			$this->_SOURCES[$source_kidx]['title'] 		 = (isset($result['title']) ? $result['title'] : '');
+			$this->_SOURCES[$source_kidx]['link'] 		 = (isset($result['link']) ? $result['link'] : '');
 			$this->_SOURCES[$source_kidx]['items_count'] = $result['items_count'];
 			$this->_SOURCES[$source_kidx]['cached'] 	 = $result['cached'];
 			$this->_SOURCES[$source_kidx]['updatedTime'] = $result['updatedTime'];
+			$this->_SOURCES[$source_kidx]['encoding']	 = $result['encoding'];
 			$this->_SOURCES[$source_kidx]['feed_format'] = $result['feed_format'];
 			$this->_SOURCES[$source_kidx]['generator']	 = $result['generator'];
 			$this->_SOURCES[$source_kidx]['namespaces']	 = $result['namespaces'];
@@ -914,8 +956,18 @@ class mYLastRSS
 	function my_convert_encoding($encStr='')
 		{
 		$result = $encStr;
-		//$this->rsscp = '';
 		$strCP = $this->rsscp;
+        
+		if (strtolower($strCP) === 'utf-8')
+            {
+            // replace emojis if utf-8
+            $this->_InitEmojisArray();
+			$result=str_replace('Â©','&copy;',$result);
+			$result=str_replace('â–ªï¸Ž','-',$result); // emoji petit carre noir
+       		$result = strtr($result, $this->_EMOJIS_TRANS);
+			$result=str_replace('â€‹','',$result); // ZWSP U+200B espace sans chasse
+			$result=str_replace('EÌ€','&Egrave;',$result); // È ou E avec diacritic &#768;
+            }
 		
 		// If code page is set convert character encoding to required
 		if (strtoupper($this->cp) == 'UTF-8')
@@ -923,15 +975,13 @@ class mYLastRSS
 			if (in_array(strtolower($strCP),array('iso-8859-1','windows-1252')))
 				{
 				$result=str_replace('€','&'.'euro;',$result);
-				//$result = utf8_decode($result);
-				
 				$result = utf8_encode($result);
 				}
 			$result=str_replace(array('â€™','â€˜'),"'",$result);
 			$result=str_replace(array('â€œ','â€'),'"',$result);
 			$result=str_replace('Å“','oe',$result);
 			$result=str_replace('&'.'euro;','â‚¬',$result);
-			$result=str_replace('â€“','--',$result);
+			$result=str_replace('â€“','-',$result);
 			$result=str_replace('â€¦','...',$result);
 			}
 		else if ($this->cp != '')
@@ -941,23 +991,74 @@ class mYLastRSS
 				if ($strCP == '')
 					{
 					$this->rsscp = $strCP = 'auto';
-					$this->_LAST_ERROR_MESSAGES[] = "mb_convert_encoding() not allow blank value for encodage";
+					$this->_LAST_ERROR_MESSAGES[] = "mb_convert_encoding() not allow blank value encoding";
 					}
 					
 				if (in_array(strtolower($strCP),array('auto','utf-8')))
 					{
-					$result=str_replace('â€“','--',$result);
+					$result=str_replace(' â€Œ',' ',$result); //espace ?
+					$result=str_replace('Â©','&copy;',$result);
+					$result=str_replace('â–ªï¸Ž','*',$result);
+					$result=str_replace(array('â‚¬'),'&'.'euro;',$result);
+					$result=str_replace('â€¯â€‹',' ',$result); //espace fine
+                    $result=str_replace('cÌ§','&ccedil;',$result); // ç
+					$result=str_replace('AÌ€','&Agrave;',$result); // À
+                    $result=str_replace('eÌ€','&egrave;',$result); // è
+                    $result=str_replace('aÌ€','&agrave;',$result); // à
+                    $result=str_replace('uÌ€','&ugrave;',$result); // ù
+                    $result=str_replace('uÌ‚','&ucirc;',$result); // û
+					$result=str_replace('â€“','-',$result);
+					$result=str_replace('âˆ’','-',$result);
+					$result=str_replace('Ì¶','-',$result);
+					$result=str_replace('â€‘','-',$result);
 					$result=str_replace('â€¦','...',$result);
+					$result=str_replace('â€','-',$result);
+					$result=str_replace('ï¼š',': ',$result);
+					$result=str_replace('ï½œ',' | ',$result);
+					$result=str_replace('â¸»','---',$result);
+					$result=str_replace('ï»¿','',$result); // bom utf8
+					$result=str_replace('â€…',' ',$result); //espace insecable ?
+					$result=str_replace('â€¯',' ',$result); //espace insecable ?
+					$result=str_replace('áµ‰','e',$result); // Lettre modificative minuscule E
+					$result=str_replace('Ë¢','s',$result); // Lettre modificative minuscule S
+					$result=str_replace('Äƒ','a',$result); // a avec diacritic breve
+					$result=str_replace('È™','s',$result); // s avec diacritic
+					$result=str_replace('Å‘','o',$result); // o double accent aigu
+					$result=str_replace('Ä›','e',$result); // e antiflexe
+					$result=str_replace('Ä¼','l',$result); // L virgule souscrite
+					$result=str_replace('IÌ‚','&Icirc;',$result); 
+					$result=str_replace('EÌ','&Eacute;',$result); // É
+                    $result=str_replace('eÌ‚','&ecirc;',$result); // ê
+                    $result=str_replace('Ã«','&euml;',$result); // ë
+                    $result=str_replace('eÌˆ','&euml;',$result); // ë
+					$result=str_replace('eÌ','&eacute;',$result); // é
+                    $result=str_replace('aÌ‚','&acirc;',$result); // â
+                    $result=str_replace('oÌ‚','&ocirc;',$result); // ô
+                    $result=str_replace('Ã®','&icirc;',$result); // î
+					$result=str_replace('iÌˆ','&iuml;',$result); //i trema minuscule
+                    $result=str_replace('iÌ‚','&icirc;',$result); // î
+                    $result=str_replace('Ã¹','&ugrave;',$result); // ù
+                    $result=str_replace('Ã§','&ccedil;',$result); // ç
+					$result=str_replace('ÄŸ','g',$result); // g turc avec diacritic
+					$result=str_replace('Ð¡','C',$result); // C majuscule bizarre
+					$result=str_replace(array('Å“'),'oe',$result);
+					$result=str_replace('Ê³','r',$result); // Lettre modificative minuscule R
+					$result=str_replace('Ä‡','c',$result); // c accent aigu
+					$result=str_replace(array('â€‰','â€Š','â– '),' ',$result);
 					$result=str_replace(array('â€™','â€˜'),"'",$result);
 					$result=str_replace(array('â€œ','â€','Ë'),'"',$result);
-					$result=str_replace(array('Å“'),'oe',$result);
-					$result=str_replace('â‚¬','&'.'euro;',$result);
-					$result=str_replace('â€‰',' ',$result);
+					$result=str_replace('Ä','c',$result); // c avec diacritic
+					$result=str_replace('Ä','a',$result); // a avec diacritic
+					$result=str_replace('Å™','r',$result); // lettre R diacritée d'un caron
+                    $result=str_replace(' â€ª',' ',$result); //espace suivie LEFT-TO-RIGHT EMBEDDING
+					$result=str_replace(' â€',' ',$result); //espace suivie liant sans chasse
+					$result=str_replace(' â ',' ',$result); //espace fine ?
 					}
 				
-				$result=str_replace('œ','oe',$result);
-				
 				$result = @mb_convert_encoding($result, $this->cp, $strCP);
+				
+				$result=str_replace('œ','oe',$result);
+				$result=str_replace('Œ','OE',$result);
 				
 				if (in_array(strtolower($this->cp),array('iso-8859-1','windows-1252')))
 					{
@@ -970,7 +1071,7 @@ class mYLastRSS
 				if ($strCP == 'auto')
 					{
 					$this->rsscp = $strCP = '';
-					$this->_LAST_ERROR_MESSAGES[] = "iconv() not allow 'auto' value for encodage";
+					$this->_LAST_ERROR_MESSAGES[] = "iconv() not allow 'auto' value encoding";
 					}
 				$result = @iconv($strCP, $this->cp.'//TRANSLIT', $result);
 				}
@@ -1002,7 +1103,7 @@ class mYLastRSS
 	// Modification of preg_match(); return trimed field with index 1
 	// from 'classic' preg_match() array output
 	// -------------------------------------------------------------------
-	function my_preg_match ($pattern, $subject) {
+	function my_preg_match ($pattern, $subject, $convert_encoding = TRUE) {
 		// start regullar expression
 		preg_match($pattern, $subject, $out);
 
@@ -1012,7 +1113,7 @@ class mYLastRSS
 			$out[1] = $this->process_cdata($out[1]);
 
 			// If code page is set convert character encoding to required
-			if ($this->cp != '')
+			if (($convert_encoding === TRUE) AND ($this->cp != ''))
 				{
 				$out[1] = $this->my_convert_encoding($out[1]);
 				}
@@ -1026,36 +1127,6 @@ class mYLastRSS
 		}
 	}
 	
-	function GetContent($path='',$timeOut)
-		{
-		// TODO: check timeOut
-		$this->_QUERY_COUNT++;
-        $raw_content = ''; 
-		if ($f = @fopen($path, 'rb'))
-			{ 
-            while (!feof($f))
-				{ 
-                $raw_content .= fgets($f, 4096); 
-            	}
-            fclose($f); 
-			}
-		else
-			{
-			$this->_LAST_ERROR_MESSAGES[] = "Failed to fopen('$path')";
-			$this->_QUERY_COUNT++;
-			if ($arraycontent = @file($path))
-				{
-				$raw_content = implode('', $arraycontent);
-				}
-			else
-				{
-				$this->_LAST_ERROR_MESSAGES[] = "Failed to file('$path')";
-				}
-			}
-				
-		return mYLR_StripHTMLcomment($raw_content);
-		}
-
 	function _StandardizedStr($title)
 		{
 		$title = mYLR_StripCDATA($title);
@@ -1070,6 +1141,61 @@ class mYLastRSS
 		return $title;
 		}
 		
+	function _sourceIsURL($rss_url)
+		{
+		if (substr($rss_url, 0, 7) === 'http://') return TRUE;
+		if (substr($rss_url, 0, 8) === 'https://') return TRUE;
+		return FALSE;
+		}
+		
+	function _getSourceClientOptions($rss_url,$source_kidx='')
+		{
+		$options = array();
+		
+		$options['transport']		 = $this->transport;
+		
+		if ($this->timeOut > 0)
+			{
+			$options['time-out'] = $this->timeOut;
+			}
+			
+		if ('' === trim($options['transport']))
+			{
+			$options['transport'] = 'fopen';
+			if (class_exists('WpOrg\Requests\Autoload'))
+				{
+				$options['transport'] = 'WpRequests';
+				}
+			else if (class_exists('Requests'))
+				{
+				$options['transport'] = 'Requests';
+				}
+			else if (class_exists('Snoopy'))
+				{
+				$options['transport'] = 'Snoopy';
+				}
+			}
+		
+		if (FALSE === $this->_sourceIsURL($rss_url))
+			{
+			$options['transport'] = 'fopen';
+			unset($options['time-out']);
+			}
+			
+		$this->_SOURCES[$source_kidx]['client'] = $options;
+		
+		if ($this->userAgent !== '')
+			{
+			$options['user-agent'] = $this->userAgent;
+			}
+		if ($this->cache_dir != '')
+			{
+			$options['temp-dir'] = $this->cache_dir;
+			}
+			
+		return $options;
+		}
+		
 	// -------------------------------------------------------------------
 	// Parse() is private method used by Get() to load and parse RSS file.
 	// Don't use Parse() in your scripts - use Get($rss_file) instead.
@@ -1081,7 +1207,7 @@ class mYLastRSS
 		
 		$parsing_started_time = time();
 		if ($source_kidx == '') $source_kidx = $this->_SourceKIDX($rss_url);
-		if ($this->_SOURCES[$source_kidx]['errorFileName'])
+		if (isset($this->_SOURCES[$source_kidx]['errorFileName']))
 			{
 			$errorFilename = $this->_SOURCES[$source_kidx]['errorFileName'];
 			}
@@ -1091,70 +1217,35 @@ class mYLastRSS
 			}
 		$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
 		
-		// Open and load RSS file
-		if (($this->useSnoopy) AND (class_exists('Snoopy')) AND ((substr($rss_url, 0, 7) == 'http://') OR (substr($rss_url, 0, 8) == 'https://')))
+		$client = new mYLR_Client($this->_getSourceClientOptions($rss_url,$source_kidx));
+		if ($this->_sourceIsURL($rss_url))
 			{
-			// With Snoopy client
-			$client = new Snoopy();
-			$client->agent = $this->userAgent;
-			$client->maxframes = 1; // Some feeds use a frame !!!! :o.
-			$client->maxredirs = 4;
-			$client->offsiteok = true;
-			$client->passcookies = true; // Bugged ? :o(
-			if ($this->timeOut > 0) $client->read_timeout = $this->timeOut;
-			if ($this->cache_dir != '') $client->temp_dir = $this->cache_dir;
-			
 			$this->_QUERY_COUNT++;
-			
-			if (@$client->fetch($rss_url))
+			}
+		$rss_content = $client->getContent($rss_url);
+		if ($client->isRedirect())
+			{
+			$this->_LAST_ERROR_MESSAGES[] = $client->getTransportName().'->getContent('.$rss_url.') redirected to "'.$client->getLastRedirect().'"';
+			}
+		if (0 === strlen(trim($rss_content)))
+			{
+			if ($client->isTimedOut())
 				{
-				if ($client->lastredirectaddr != '')
-					{
-					$this->_LAST_ERROR_MESSAGES[] = "Snoopy detect and follow '$rss_url' redirect to '$client->lastredirectaddr'";
-					}
-				
-				if (is_Array($client->results))
-					{
-					// If framed :o|
-					$rss_content = trim(mYLR_StripHTMLcomment(implode('', $client->results)));
-					}
-				else
-					{
-					$rss_content = trim(mYLR_StripHTMLcomment($client->results));
-					}
-					
-				if ($client->timed_out === TRUE)
-					{
-					$this->_LAST_ERROR_MESSAGES[] = "Snoopy fetch('$rss_url') timed out, Error: ".$client->error.", Response code: ".$client->response_code."";
-					$rss_content = ''; // Better to ignore it
-					}
-				else if (strlen(trim($rss_content)) == 0)
-					{
-					$this->_LAST_ERROR_MESSAGES[] = "Snoopy fetch('$rss_url') empty content, Error: ".$client->error.", Response code: ".$client->response_code."";
-					if (($this->timeOut === 0) OR (time()-$parsing_started_time < $this->timeOut))
-						{
-						$rss_content = $this->GetContent($rss_url,($this->timeOut-(time()-$parsing_started_time)));
-						}
-					}
-				else if (strpos(strtolower(substr($rss_content,0,350)),'<html') !== FALSE)
-					{
-					// Stranger content like HTML page
-					//if ($this->cache_dir != '') $this->_SaveRawFileAs($error_content_file,$rss_content);
-					$this->_LAST_ERROR_MESSAGES[] = "Snoopy fetch('$rss_url') HTML content, Error: ".$client->error.", Response code: ".$client->response_code."";
-					if (($this->timeOut === 0) OR (time()-$parsing_started_time < $this->timeOut))
-						{
-						$rss_content = $this->GetContent($rss_url,($this->timeOut-(time()-$parsing_started_time)));
-						}
-					}
+				$this->_LAST_ERROR_MESSAGES[] = $client->getTransportName().'->getContent('.$rss_url.') timed out';
+				}
+			else if ((0 !== $client->getStatusCode()) OR ('' !== $client->getLastErrorMessage()))
+				{
+				$this->_LAST_ERROR_MESSAGES[] = $client->getTransportName().'->getContent('.$rss_url.') return status '.$client->getStatusCode().' "'.$client->getLastErrorMessage().'"';
 				}
 			else
 				{
-				$this->_LAST_ERROR_MESSAGES[] = "Snoopy failed to fetch('$rss_url'), Error: ".$client->error.", Response code: ".$client->response_code."";
+				$this->_LAST_ERROR_MESSAGES[] = $client->getTransportName().'->getContent('.$rss_url.') return empty response';
 				}
-			}
-		else
-			{
-			$rss_content = trim($this->GetContent($rss_url,$this->timeOut));
+			if ($this->cache_dir != '')
+				{
+				@touch($error_content_file);
+				}
+			return FALSE;
 			}
 			
 		// Clean-up first lines (and prevent PHP/Apache errors displayed)
@@ -1162,16 +1253,19 @@ class mYLastRSS
 			{
 			$rss_content = trim(substr($rss_content,$posXML));
 			}
-		
+		// Clean-up HTML comments
+		$rss_content = trim(mYLR_StripHTMLcomment($rss_content));
+		// Clean useless spaces
+		$rss_content = trim(mYLR_TrimXmlTags($rss_content));
+		// Create header chunk to detect format
 		$rss_content_chunk = trim(strtolower(substr($rss_content,0,350)));
 		
 		if (strlen($rss_content_chunk) == 0)
 			{
 			// Error in opening return False
-			$this->_LAST_ERROR_MESSAGES[] = "No content downloaded from '$rss_url'";
+			$this->_LAST_ERROR_MESSAGES[] = $client->getTransportName().'->getContent('.$rss_url.') return useless content';
 			if ($this->cache_dir != '')
 				{
-				//$this->_SaveRawFileAs($error_content_file,'empty');
 				@touch($error_content_file);
 				}
 			return False;
@@ -1181,14 +1275,12 @@ class mYLastRSS
 			$this->_LAST_ERROR_MESSAGES[] = "HTML content downloaded from '$rss_url'";
 			if ($this->cache_dir != '')
 				{
-				//$this->_SaveRawFileAs($error_content_file,$rss_content);
 				@touch($error_content_file);
 				}
 			return False;
 			}
 		else if (strpos($rss_content_chunk,'<feed') !== FALSE)
 			{
-			//$this->_LAST_ERROR_MESSAGES[] = "Atom content downloaded from '$rss_url'";
 			return $this->_ParseAtom($rss_url,$source_kidx,$rss_content);
 			}
 		else if ((strpos($rss_content_chunk,'<rss') !== FALSE) OR (strpos($rss_content_chunk,'<rdf') !== FALSE))
@@ -1247,6 +1339,10 @@ class mYLastRSS
 				{
 				$channel_content = trim($this->_StripItems($channel_content));
 				}
+			if ($channel_content == '')
+				{
+				$this->_LAST_ERROR_MESSAGES[] = "Empty channel content in '$rss_url'";
+				}
 				
 			// Parse CHANNEL info
 			foreach($this->channeltags as $channeltag)
@@ -1256,7 +1352,7 @@ class mYLastRSS
 				}
 			
 			// If lastBuildDate is valid
-			if (($result['lastBuildDate'] != '') AND (($timestamp = strtotime($result['lastBuildDate'])) !== -1) AND ($timestamp > 0))
+			if (isset($result['lastBuildDate']) && ($result['lastBuildDate'] != '') && (($timestamp = mYLR_RSSPubDate2UnixTimeStamp($result['lastBuildDate'])) > 0))
 				{
 				$result['lastBuildTimeStamp'] = $timestamp;
 				// If date_format is specified
@@ -1265,13 +1361,13 @@ class mYLastRSS
 					$result['lastBuildDate'] = gmdate($this->date_format, $timestamp);
 					}
 				}
-			else if ($result['lastBuildDate'] != '')
+			else if (isset($result['lastBuildDate']) && ($result['lastBuildDate'] != ''))
 				{
 				$this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad lastBuildDate format';
 				}
 
 			// If pubDate is valid
-			if (($result['pubDate'] != '') AND (($timestamp = strtotime($result['pubDate'])) !== -1))
+			if (isset($result['pubDate']) && ($result['pubDate'] != '') && (($timestamp = mYLR_RSSPubDate2UnixTimeStamp($result['pubDate'])) > 0))
 				{
 				$result['pubTimeStamp'] = $timestamp;
 				// If date_format is specified
@@ -1280,22 +1376,29 @@ class mYLastRSS
 					$result['pubDate'] = gmdate($this->date_format, $timestamp);
 					}
 				}
-			else if ($result['dc:date'] != '')
+			else if (isset($result['dc:date']) && ($result['dc:date'] != ''))
 				{
 				$timestamp = mYLR_DCDate2UnixTimeStamp($result['dc:date']);
-				$result['pubTimeStamp'] = $timestamp;
-				if ($this->date_format != '')
+				if ($timestamp !== null)
 					{
-					// create pubDate to specified date format
-					$result['pubDate'] = gmdate($this->date_format, $timestamp);
+                    $result['pubTimeStamp'] = $timestamp;
+                    if ($this->date_format != '')
+                        {
+                        // create pubDate to specified date format
+                        $result['pubDate'] = gmdate($this->date_format, $timestamp);
+                        }
+                    else
+                        {
+                        // create pubDate to GMT/CUT date format
+                        $result['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                        }
 					}
 				else
 					{
-					// create pubDate to GMT/CUT date format
-					$result['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                    $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad dc:date format';
 					}
 				}
-			else if ($result['lastBuildTimeStamp'] != '')
+			else if (isset($result['lastBuildTimeStamp']) && ($result['lastBuildTimeStamp'] != ''))
 				{
 				$timestamp = $result['lastBuildTimeStamp'];
 				$result['pubTimeStamp'] = $timestamp;
@@ -1310,7 +1413,7 @@ class mYLastRSS
 					$result['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
 					}
 				}
-			else if ($result['pubDate'] != '')
+			else if (isset($result['pubDate']) && ($result['pubDate'] != ''))
 				{
 				$this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad pubDate format';
 				}
@@ -1340,6 +1443,10 @@ class mYLastRSS
 			preg_match_all("'<item(| .*?)>(.*?)</item>'si", $rss_content, $items);
 			$rss_items = $items[2];
 			$i = 0;
+			if (count($rss_items) == 0)
+				{
+				$this->_LAST_ERROR_MESSAGES[] = "No item found in '$rss_url'";
+				}
 			foreach($rss_items as $rss_item)
 				{
 				$itemResult = array();
@@ -1349,16 +1456,23 @@ class mYLastRSS
 				// Parse item tags to $itemResult[]
 				foreach($this->itemtags as $itemtag)
 					{
-					$temp = $this->my_preg_match("'<$itemtag\b.*?>(.*?)</$itemtag>'si", $rss_item);
+					$temp = $this->my_preg_match("'<$itemtag\b.*?>(.*?)</$itemtag>'si", $rss_item, TRUE);
 					if ($temp != '')
 						{
+                        // dedoublon prendre le dernier
+                        $itemtag_results = array();
+                        preg_match_all("'<$itemtag(| .*?)>(.*?)</$itemtag>'si", $rss_item, $itemtag_results);
+                        $itemtag_values = $itemtag_results[2];
+                        $nb_itemtag_values = count($itemtag_values);
+                        if ($nb_itemtag_values > 1)
+                            {
+                            $temp = $this->my_convert_encoding($itemtag_values[($nb_itemtag_values - 1)]);
+                            }
 						$itemResult[$itemtag] = $temp; // Set only if not empty
 						}
 					}
-				
 				if (count($itemResult) == 0)
 					{
-					// On s'fout de la gueule du monde là ?!
 					continue;
 					}
 				
@@ -1386,25 +1500,24 @@ class mYLastRSS
 						$itemResult['link'] = $itemResult['alink'];
 						}
 					}
-					
 				if ($this->useOrigLink == TRUE)
 					{
-					if ($itemResult['feedburner:origLink'] != '')
+					if (isset($itemResult['feedburner:origLink']) && ($itemResult['feedburner:origLink'] != ''))
 						{
 						$itemResult['feedburner:trackLink'] = $itemResult['link'];
 						$itemResult['link'] = $itemResult['feedburner:origLink'];
 						unset($itemResult['feedburner:origLink']);
 						}
-					else if ($itemResult['fs:srclink'] != '')
+					else if (isset($itemResult['fs:srclink']) && ($itemResult['fs:srclink'] != ''))
 						{
 						$itemResult['fs:trackLink'] = $itemResult['link'];
 						$itemResult['link'] = $itemResult['fs:srclink'];
 						unset($itemResult['fs:srclink']);
 						}
-					else if ($result['generator'] == 'Feediz')
+					else if (isset($result['generator']) && ($result['generator'] == 'Feediz'))
 						{
 						$itemResult['feediz:trackLink'] = $itemResult['link'];
-						$itemResult['link'] = $itemResult['guid'];;
+						$itemResult['link'] = $itemResult['guid'];
 						}
 						
 					if (strpos($itemResult['link'],'/0L') > 1)
@@ -1419,39 +1532,59 @@ class mYLastRSS
 						$itemResult['link'] = mYLR_DecodeXitiURL($itemResult['link']);
 						}
 						
+					if (strpos($itemResult['link'],'acpm.fr/track') > 1)
+						{
+						$itemResult['acpm:trackLink'] = $itemResult['link'];
+						$itemResult['link'] = mYLR_DecodeAcpmURL($itemResult['link']);
+						}
+						
 					if (strpos($itemResult['link'],'ns_campaign=') > 1)
 						{
 						$itemResult['nedstat:trackLink'] = $itemResult['link'];
 						$itemResult['link'] = mYLR_StripNedStatFragment($itemResult['link']);
 						}
 						
-					if (strpos($itemResult['link'],'*'))
+					if (strpos($itemResult['link'],'*') > 1)
 						{
 						$itemResult['yahoo:trackLink'] = $itemResult['link'];
 						$itemResult['link'] = urldecode(substr(strrchr($itemResult['link'],'*'),1));
 						}
 						
-					if (strpos($itemResult['link'],'xtor='))
+					if (strpos($itemResult['link'],'xtor=') > 1)
 						{
 						$itemResult['xtor:trackLink'] = $itemResult['link'];
 						$itemResult['link'] = mYLR_StripXtorFragment($itemResult['link']);
 						}
 						
-					if (strpos($itemResult['link'],'utm_'))
+					if (strpos($itemResult['link'],'utm_') > 1)
 						{
 						$itemResult['utm:trackLink'] = $itemResult['link'];
 						$itemResult['link'] = mYLR_StripUtmFragment($itemResult['link']);
 						}
 						
-					if (strpos($itemResult['link'],'?rss'))
+					if (strpos($itemResult['link'],'at_medium') > 1)
+						{
+						$itemResult['atmedium:trackLink'] = $itemResult['link'];
+						$itemResult['link'] = mYLR_StripAtMediumFragment($itemResult['link']);
+						}
+						
+					if (strpos($itemResult['link'],'?rss') > 1)
 						{
 						$itemResult['rss:trackLink'] = $itemResult['link'];
 						$itemResult['link'] = mYLR_StripRssFragment($itemResult['link']);
 						}
+						
+					if (strpos($itemResult['link'],'?cache=') > 1)
+						{
+                        // use by RDS.ca
+						$itemResult['cache:trackLink'] = $itemResult['link'];
+						$itemResult['link'] = mYLR_StripCacheFragment($itemResult['link']);
+						}
 					}
+				$itemResult['link'] = mYLR_URLunEntities($itemResult['link']);
 					
 				// If pubDate is valid
-				if (($itemResult['pubDate'] != '') AND (($timestamp = strtotime($itemResult['pubDate'])) !== -1))
+				if (isset($itemResult['pubDate']) && ($itemResult['pubDate'] != '') && (($timestamp = mYLR_RSSPubDate2UnixTimeStamp($itemResult['pubDate'])) > 0))
 					{
 					$itemResult['pubTimeStamp'] = $timestamp;
 					// If date_format is specified
@@ -1461,65 +1594,93 @@ class mYLastRSS
 						$itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
 						}
 					}
-				else if ($itemResult['dc:date'] != '')
+				else if (isset($itemResult['dc:date']) && ($itemResult['dc:date'] != ''))
 					{
 					$timestamp = mYLR_DCDate2UnixTimeStamp($itemResult['dc:date']);
-					$itemResult['pubTimeStamp'] = $timestamp;
-					if ($this->date_format != '')
-						{
-						// create pubDate to specified date format
-						$itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
-						}
-					else
-						{
-						// create pubDate to GMT/CUT date format
-						$itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
-						}
+                    if ($timestamp !== null)
+                        {
+                        $itemResult['pubTimeStamp'] = $timestamp;
+                        if ($this->date_format != '')
+                            {
+                            // create pubDate to specified date format
+                            $itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
+                            }
+                        else
+                            {
+                            // create pubDate to GMT/CUT date format
+                            $itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                            }
+                        }
+                    else
+                        {
+                        $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad dc:date format';
+                        }
 					}
-				else if ($itemResult['dcterms:modified'] != '')
+				else if (isset($itemResult['dcterms:modified']) && ($itemResult['dcterms:modified'] != ''))
 					{
 					$timestamp = mYLR_DCDate2UnixTimeStamp($itemResult['dcterms:modified']);
-					$itemResult['pubTimeStamp'] = $timestamp;
-					if ($this->date_format != '')
-						{
-						// create pubDate to specified date format
-						$itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
-						}
-					else
-						{
-						// create pubDate to GMT/CUT date format
-						$itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
-						}
+                    if ($timestamp !== null)
+                        {
+                        $itemResult['pubTimeStamp'] = $timestamp;
+                        if ($this->date_format != '')
+                            {
+                            // create pubDate to specified date format
+                            $itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
+                            }
+                        else
+                            {
+                            // create pubDate to GMT/CUT date format
+                            $itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                            }
+                        }
+                    else
+                        {
+                        $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad dcterms:modified format';
+                        }
 					}
-				else if ($itemResult['a10:updated'] != '')
+				else if (isset($itemResult['a10:updated']) && ($itemResult['a10:updated'] != ''))
 					{
 					$timestamp = mYLR_DCDate2UnixTimeStamp($itemResult['a10:updated']);
-					$itemResult['pubTimeStamp'] = $timestamp;
-					if ($this->date_format != '')
-						{
-						// create pubDate to specified date format
-						$itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
-						}
-					else
-						{
-						// create pubDate to GMT/CUT date format
-						$itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
-						}
+                    if ($timestamp !== null)
+                        {
+                        $itemResult['pubTimeStamp'] = $timestamp;
+                        if ($this->date_format != '')
+                            {
+                            // create pubDate to specified date format
+                            $itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
+                            }
+                        else
+                            {
+                            // create pubDate to GMT/CUT date format
+                            $itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                            }
+                        }
+                    else
+                        {
+                        $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad a10:updated format';
+                        }
 					}
 				else if ($itemResult['pubDate'] != '')
 					{
 					$timestamp = mYLR_DCDate2UnixTimeStamp($itemResult['pubDate']);
-					$itemResult['pubTimeStamp'] = $timestamp;
-					if ($this->date_format != '')
-						{
-						// create pubDate to specified date format
-						$itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
-						}
-					else
-						{
-						// create pubDate to GMT/CUT date format
-						$itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
-						}
+                    if ($timestamp !== null)
+                        {
+                        $itemResult['pubTimeStamp'] = $timestamp;
+                        if ($this->date_format != '')
+                            {
+                            // create pubDate to specified date format
+                            $itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
+                            }
+                        else
+                            {
+                            // create pubDate to GMT/CUT date format
+                            $itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                            }
+                        }
+                    else
+                        {
+                        $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad pubDate format';
+                        }
 					}
 				else if ($result['pubTimeStamp'] != '')
 					{
@@ -1542,8 +1703,7 @@ class mYLastRSS
 					$this->_LAST_ERROR_MESSAGES[] = 'Item '.$itemResult['guid'].' has not pubDate';
 					}
 					
-				$itemResult['title'] = mYLR_StripCR($itemResult['title']);
-				$itemResult['link'] = mYLR_URLunEntities($itemResult['link']);
+				$itemResult['title'] = mYLR_StripCR(isset($itemResult['title']) ? $itemResult['title'] : '');
 				
 				if ($this->kidx_rule == 'guid')
 					{
@@ -1567,7 +1727,6 @@ class mYLastRSS
 						}
 					else
 						{
-						// C'est inacceptable :o|
 						continue;
 						}
 					}
@@ -1580,7 +1739,6 @@ class mYLastRSS
 						}
 					else
 						{
-						// C'est inacceptable :o|
 						continue;
 						}
 					}
@@ -1589,12 +1747,10 @@ class mYLastRSS
 					// Create unique index (with MD5) from date & title for this item
 					if ((isset($itemResult['pubTimeStamp'])) AND ($itemResult['title'] != ''))
 						{
-						//$kidx = md5(gmdate('dmY',$itemResult['pubTimeStamp']).strtolower(str_replace(array(' ','_','(',')','[',']'),'',strip_tags($this->unhtmlentities($itemResult['title'])))));
 						$kidx = md5(gmdate('dmY',$itemResult['pubTimeStamp']).$this->_StandardizedStr($itemResult['title']));
 						}
 					else
 						{
-						// C'est inacceptable :o|
 						continue;
 						}
 					}
@@ -1614,7 +1770,6 @@ class mYLastRSS
 						unset($result['items'][$kidx]);
 						}
 					}
-				
 				$result['items'][$kidx] = $itemResult;
 				$result['items'][$kidx]['kidx'] = $kidx;
 					
@@ -1622,7 +1777,6 @@ class mYLastRSS
 				if (isset($result['items'][$kidx]['category']))
 					{
 					$result['items'][$kidx]['categories'] = array(); // create array
-					
 					preg_match_all("'<category(| .*?)>(.*?)</category>'si", $rss_item, $categories);
 					$item_categories = $categories[2];
 					if (count($item_categories) > 1)
@@ -1722,7 +1876,7 @@ class mYLastRSS
 					$result['items'][$kidx]['source'] = $result['title'];
 					$result['items'][$kidx]['source_url'] = $rss_url;
 					}
-				$result['items'][$kidx]['source_link'] = $result['link'];
+				$result['items'][$kidx]['source_link'] = (isset($result['link']) ? $result['link'] : '');
 				$result['items'][$kidx]['source_kidx'] = $source_kidx;
 				
 				// Parse ENCLOSURE info
@@ -1732,21 +1886,21 @@ class mYLastRSS
 					{
 					foreach($MYLR_FORMATS[$feed_format]['item_enclosure_attributes'] as $enclosureprop)
 						{
-						$temp = $this->my_preg_match("'\s$enclosureprop=[\'\"](.*?)[\'\"]'si", $out_enclosure[1]);
+                        $convert_encoding = FALSE; // todo url require alway be in utf8
+						$temp = $this->my_preg_match("'\s$enclosureprop=[\'\"](.*?)[\'\"]'si", $out_enclosure[1], $convert_encoding);
 						if ($temp != '') $result['items'][$kidx]['enclosure_'.$enclosureprop] = $temp; // Set only if not empty
 						}
 					}
-					
 				if ($this->useOrigLink == TRUE)
 					{
-					if ($result['items'][$kidx]['feedburner:origEnclosureLink'] != '')
+					if (isset($result['items'][$kidx]['feedburner:origEnclosureLink']) && ($result['items'][$kidx]['feedburner:origEnclosureLink'] != ''))
 						{
 						$result['items'][$kidx]['feedburner:trackEnclosure'] = $result['items'][$kidx]['enclosure_url'];
 						$result['items'][$kidx]['enclosure_url'] = $result['items'][$kidx]['feedburner:origEnclosureLink'];
 						unset($result['items'][$kidx]['feedburner:origEnclosureLink']);
 						}
 					
-					if (strpos($result['items'][$kidx]['enclosure_url'],'/0L') > 1)
+					if (isset($result['items'][$kidx]['enclosure_url']) && (strpos($result['items'][$kidx]['enclosure_url'],'/0L') > 1))
 						{
 						$result['items'][$kidx]['feedsportal:trackEnclosure'] = $result['items'][$kidx]['enclosure_url'];
 						$result['items'][$kidx]['enclosure_url'] = mYLR_DecodeFeedPortalURL($result['items'][$kidx]['enclosure_url']);
@@ -1811,7 +1965,7 @@ class mYLastRSS
 			}
 		else
 			{
-			$this->_LAST_ERROR_MESSAGES[] = "Unknown content downloaded from '$rss_url'";
+			$this->_LAST_ERROR_MESSAGES[] = $client->getTransportName().'->getContent('.$rss_url.') return unknown content';
 			if ($this->cache_dir != '')
 				{
 				//$this->_SaveRawFileAs($error_content_file,$rss_content);
@@ -1906,7 +2060,7 @@ class mYLastRSS
 		$result['namespaces'] = $nspaces_results[1];
 		$result['namespaces'][] = 'dc';
 		$result['namespaces'][] = 'content';
-		//$result['namespaces'][] = 'atom';
+		$result['namespaces'][] = 'atom';
 		$result['namespaces'] = array_values(array_unique($result['namespaces']));
 		
 		$this->_InitSupportedTags($result['feed_format'],$result['namespaces']);
@@ -1928,40 +2082,72 @@ class mYLastRSS
 			}
 		$channel_content = trim($this->_StripAtomEntries($channel_content));
 		
-		$temp = $this->my_preg_match("'<title.*?>(.*?)</title>'si", $channel_content);
-		if ($temp != '') $result['title'] = $temp; // Set only if not empty
+		// Parse CHANNEL info
+		foreach($this->channeltags as $channeltag)
+			{
+			$temp = trim($this->my_preg_match("'<$channeltag.*?>(.*?)</$channeltag>'si", $channel_content));
+			if ($temp != '')
+				{
+				if (strpos($channeltag,':') === FALSE)
+					{
+					$result['atom:'.$channeltag] = $temp;
+					}
+				else
+					{
+					$result[$channeltag] = $temp;
+					}
+				}
+			}
+			
+		if ($result['atom:title'] != '')
+			{
+			$result['title'] = $result['atom:title'];
+			unset($result['atom:title']);
+			}
 		
 		$temp = $this->my_preg_match("'<link.*?rel=[\'\"]alternate[\'\"].*?href=[\'\"](.*?)[\'\"].*?>'si", $channel_content);
 		if ($temp != '') $result['link'] = $temp; // Set only if not empty
-		
-		if ($result['link'] == '')
+		if ((isset($result['link']) === false) || ($result['link'] == ''))
 			{
 			$temp = $this->my_preg_match("'<link.*?href=[\'\"](.*?)[\'\"].*?rel=[\'\"]alternate[\'\"].*?>'si", $channel_content);
 			if ($temp != '') $result['link'] = $temp; // Set only if not empty
 			}
-	
-		if ($result['link'] == '')
+		if ((isset($result['link']) === false) || ($result['link'] == ''))
 			{
 			$temp = $this->my_preg_match("'<link.*?rel=[\'\"]self[\'\"].*?href=[\'\"](.*?)[\'\"].*?type=[\'\"]text/html[\'\"].*?>'si", $channel_content);
 			if ($temp != '') $result['link'] = $temp; // Set only if not empty
 			}
 	
-		$temp = $this->my_preg_match("'<updated.*?>(.*?)</updated>'si", $channel_content);
-		if ($temp != '')
+		// Search pubdate
+		if (isset($result['atom:updated']) && ($result['atom:updated'] != ''))
 			{
-			$result['dc:date'] = $temp;
+			$result['dc:date'] = $result['atom:updated'];
+			}
+		else if (isset($result['atom:published']) && ($result['atom:published'] != ''))
+			{
+			$result['dc:date'] = $result['atom:published'];
+			}
+		if (isset($result['dc:date']) && ($result['dc:date'] != ''))
+			{
 			$timestamp = mYLR_DCDate2UnixTimeStamp($result['dc:date']);
-			$result['pubTimeStamp'] = $timestamp;
-			if ($this->date_format != '')
-				{
-				// create pubDate to specified date format
-				$result['pubDate'] = gmdate($this->date_format, $timestamp);
-				}
-			else
-				{
-				// create pubDate to GMT/CUT date format
-				$result['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
-				}
+            if ($timestamp !== null)
+                {
+                $result['pubTimeStamp'] = $timestamp;
+                if ($this->date_format != '')
+                    {
+                    // create pubDate to specified date format
+                    $result['pubDate'] = gmdate($this->date_format, $timestamp);
+                    }
+                else
+                    {
+                    // create pubDate to GMT/CUT date format
+                    $result['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                    }
+                }
+            else
+                {
+                $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad dc:date format';
+                }
 			}
 		
 		$result['items'] = array(); // create array even if there are no items
@@ -1976,92 +2162,116 @@ class mYLastRSS
 			$rss_item = trim($rss_item);	
 			if ($rss_item === '') continue;
 			
-			$temp = $this->my_preg_match("'<id.*?>(.*?)</id>'si", $rss_item);
-			if ($temp != '')
+			// Parse item tags to $itemResult[]
+			foreach($this->itemtags as $itemtag)
 				{
-				$itemResult['guid'] = $temp;
-				$itemResult['guid_isPermaLink'] = FALSE;
+				$temp = $this->my_preg_match("'<$itemtag\b.*?>(.*?)</$itemtag>'si", $rss_item);
+				if ($temp != '')
+					{
+					if (strpos($itemtag,':') === FALSE)
+						{
+						$itemResult['atom:'.$itemtag] = $temp;
+						}
+					else
+						{
+						$itemResult[$itemtag] = $temp;
+						}
+					}
+				}
+			if (count($itemResult) == 0)
+				{
+				continue;
 				}
 			
-			// Recherche de date
-			$temp = $this->my_preg_match("'<modified.*?>(.*?)</modified>'si", $rss_item);
-			if ($temp != '')
+			if ($itemResult['atom:id'] != '')
 				{
-				$itemResult['dc:date'] = $temp;
+				$itemResult['guid'] = $itemResult['atom:id'];
+				$itemResult['guid_isPermaLink'] = FALSE;
+				unset($itemResult['atom:id']);
 				}
-			$temp = $this->my_preg_match("'<updated.*?>(.*?)</updated>'si", $rss_item);
-			if ($temp != '')
+			
+			// Search pubdate
+			if (isset($itemResult['atom:updated']) && ($itemResult['atom:updated'] != ''))
 				{
-				$itemResult['dc:date'] = $temp;
+				$itemResult['dc:date'] = $itemResult['atom:updated'];
 				}
-			$temp = $this->my_preg_match("'<issued.*?>(.*?)</issued>'si", $rss_item);
-			if ($temp != '')
+			else if (isset($itemResult['atom:modified']) && ($itemResult['atom:modified'] != ''))
 				{
-				$itemResult['dc:date'] = $temp;
+				$itemResult['dc:date'] = $itemResult['atom:modified'];
 				}
-			$temp = $this->my_preg_match("'<published.*?>(.*?)</published>'si", $rss_item);
-			if ($temp != '')
+			else if ($itemResult['atom:published'] != '')
 				{
-				$itemResult['dc:date'] = $temp;
+				$itemResult['dc:date'] = $itemResult['atom:published'];
 				}
-			$temp = $this->my_preg_match("'<created.*?>(.*?)</created>'si", $rss_item);
-			if ($temp != '')
+			else if ($itemResult['atom:issued'] != '')
 				{
-				$itemResult['dc:date'] = $temp;
+				$itemResult['dc:date'] = $itemResult['atom:issued'];
 				}
-			// Decryptage de date
+			else if ($itemResult['atom:created'] != '')
+				{
+				$itemResult['dc:date'] = $itemResult['atom:created'];
+				}
 			if ($itemResult['dc:date'] != '')
 				{
 				$timestamp = mYLR_DCDate2UnixTimeStamp($itemResult['dc:date']);
-				$itemResult['pubTimeStamp'] = $timestamp;
-				if ($this->date_format != '')
-					{
-					// create pubDate to specified date format
-					$itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
-					}
-				else
-					{
-					// create pubDate to GMT/CUT date format
-					$itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
-					}
+                if ($timestamp !== null)
+                    {
+                    $itemResult['pubTimeStamp'] = $timestamp;
+                    if ($this->date_format != '')
+                        {
+                        // create pubDate to specified date format
+                        $itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
+                        }
+                    else
+                        {
+                        // create pubDate to GMT/CUT date format
+                        $itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                        }
+                    }
+                else
+                    {
+                    $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad dc:date format';
+                    }
 				}
 			else
 				{
 				$this->_LAST_ERROR_MESSAGES[] = 'Item '.$itemResult['guid'].' has not pubDate';
 				}
-		
+			
+			// Search link
 			$temp = $this->my_preg_match("'<link.*?href=[\'\"](.*?)[\'\"].*?rel=[\'\"]alternate[\'\"].*?>'si", $rss_item);
-			if ($temp != '') $itemResult['link'] = $temp; // Set only if not empty
-			if ($itemResult['link'] == '')
+			if ($temp != '') $itemResult['link'] = $temp;
+			if ((isset($itemResult['link']) === false) || ($itemResult['link'] == ''))
 				{
 				$temp = $this->my_preg_match("'<link.*?rel=[\'\"]alternate[\'\"].*?href=[\'\"](.*?)[\'\"].*?>'si", $rss_item);
-				if ($temp != '') $itemResult['link'] = $temp; // Set only if not empty
+				if ($temp != '') $itemResult['link'] = $temp;
 				}
-			if ($itemResult['link'] == '')
+			if ((isset($itemResult['link']) === false) || ($itemResult['link'] == ''))
 				{
 				$temp = $this->my_preg_match("'<link.*?href=[\'\"](.*?)[\'\"].*?>'si", $rss_item);
-				if ($temp != '') $itemResult['link'] = $temp; // Set only if not empty
+				if ($temp != '') $itemResult['link'] = $temp;
 				}
-				
-			$temp = $this->my_preg_match("'<feedburner:origLink>(.*?)</feedburner:origLink>'si", $rss_item);
-			if ($temp != '') $itemResult['feedburner:origLink'] = $temp; // Set only if not empty
-				
-			$temp = $this->my_preg_match("'<fs:srclink>(.*?)</fs:srclink>'si", $rss_item);
-			if ($temp != '') $itemResult['fs:srclink'] = $temp; // Set only if not empty
-
 			if ($this->useOrigLink == TRUE)
 				{
-				if ($itemResult['feedburner:origLink'] != '')
+				if (isset($itemResult['feedburner:origLink']) && ($itemResult['feedburner:origLink'] != ''))
 					{
 					$itemResult['feedburner:trackLink'] = $itemResult['link'];
 					$itemResult['link'] = $itemResult['feedburner:origLink'];
 					unset($itemResult['feedburner:origLink']);
 					}
-				else if ($itemResult['fs:srclink'] != '')
+				else if (isset($itemResult['fs:srclink']) && ($itemResult['fs:srclink'] != ''))
 					{
 					$itemResult['fs:trackLink'] = $itemResult['link'];
 					$itemResult['link'] = $itemResult['fs:srclink'];
 					unset($itemResult['fs:srclink']);
+					}
+				else if ($result['generator'] == 'Feediz')
+					{
+					// need test case
+					/*
+					$itemResult['feediz:trackLink'] = $itemResult['link'];
+					$itemResult['link'] = $itemResult['guid'];
+					*/
 					}
 					
 				if (strpos($itemResult['link'],'/0L') > 1)
@@ -2076,45 +2286,63 @@ class mYLastRSS
 					$itemResult['link'] = mYLR_DecodeXitiURL($itemResult['link']);
 					}
 						
+				if (strpos($itemResult['link'],'acpm.fr/track') > 1)
+					{
+					$itemResult['acpm:trackLink'] = $itemResult['link'];
+					$itemResult['link'] = mYLR_DecodeAcpmURL($itemResult['link']);
+					}
+						
 				if (strpos($itemResult['link'],'ns_campaign=') > 1)
 					{
 					$itemResult['nedstat:trackLink'] = $itemResult['link'];
 					$itemResult['link'] = mYLR_StripNedStatFragment($itemResult['link']);
 					}
 						
-				if (strpos($itemResult['link'],'*'))
+				if (strpos($itemResult['link'],'*') > 1)
 					{
 					$itemResult['yahoo:trackLink'] = $itemResult['link'];
 					$itemResult['link'] = urldecode(substr(strrchr($itemResult['link'],'*'),1));
 					}
 					
-				if (strpos($itemResult['link'],'xtor='))
+				if (strpos($itemResult['link'],'xtor=') > 1)
 					{
 					$itemResult['xtor:trackLink'] = $itemResult['link'];
 					$itemResult['link'] = mYLR_StripXtorFragment($itemResult['link']);
 					}
 					
-				if (strpos($itemResult['link'],'utm_'))
+				if (strpos($itemResult['link'],'utm_') > 1)
 					{
 					$itemResult['utm:trackLink'] = $itemResult['link'];
 					$itemResult['link'] = mYLR_StripUtmFragment($itemResult['link']);
 					}
+						
+                if (strpos($itemResult['link'],'at_medium') > 1)
+                    {
+                    $itemResult['atmedium:trackLink'] = $itemResult['link'];
+                    $itemResult['link'] = mYLR_StripAtMediumFragment($itemResult['link']);
+                    }
 					
-				if (strpos($itemResult['link'],'?rss'))
+				if (strpos($itemResult['link'],'?rss') > 1)
 					{
 					$itemResult['rss:trackLink'] = $itemResult['link'];
 					$itemResult['link'] = mYLR_StripRssFragment($itemResult['link']);
 					}
+                    
+                if (strpos($itemResult['link'],'?cache=') > 1)
+                    {
+                    // use by RDS.ca
+                    $itemResult['cache:trackLink'] = $itemResult['link'];
+                    $itemResult['link'] = mYLR_StripCacheFragment($itemResult['link']);
+                    }
 				}
-
-			$temp = $this->my_preg_match("'<title.*?>(.*?)</title>'si", $rss_item);
-			if ($temp != '')
-				{
-				$itemResult['title'] = mYLR_StripCR($temp);
-				}
-					
-			$itemResult['title'] = mYLR_StripCR($itemResult['title']);
 			$itemResult['link'] = mYLR_URLunEntities($itemResult['link']);
+
+			if ($itemResult['atom:title'] != '')
+				{
+				$itemResult['title'] = $itemResult['atom:title'];
+				unset($itemResult['atom:title']);
+				}
+			$itemResult['title'] = mYLR_StripCR($itemResult['title']);
 			
 			if ($this->kidx_rule == 'guid')
 				{
@@ -2138,7 +2366,6 @@ class mYLastRSS
 					}
 				else
 					{
-					// C'est inacceptable :o|
 					continue;
 					}
 				}
@@ -2151,7 +2378,6 @@ class mYLastRSS
 					}
 				else
 					{
-					// C'est inacceptable :o|
 					continue;
 					}
 				}
@@ -2160,12 +2386,10 @@ class mYLastRSS
 				// Create unique index (with MD5) from date & title for this item
 				if ((isset($itemResult['pubTimeStamp'])) AND ($itemResult['title'] != ''))
 					{
-					//$kidx = md5(gmdate('dmY',$itemResult['pubTimeStamp']).strtolower(str_replace(array(' ','_','(',')','[',']'),'',strip_tags($this->unhtmlentities($itemResult['title'])))));
 					$kidx = md5(gmdate('dmY',$itemResult['pubTimeStamp']).$this->_StandardizedStr($itemResult['title']));
 					}
 				else
 					{
-					// C'est inacceptable :o|
 					continue;
 					}
 				}
@@ -2185,18 +2409,30 @@ class mYLastRSS
 					unset($result['items'][$kidx]);
 					}
 				}
-				
 			$result['items'][$kidx] = $itemResult;
 			$result['items'][$kidx]['kidx'] = $kidx;
+			
+			// search desc and content
+			if (isset($result['items'][$kidx]['atom:summary']))
+				{
+				$result['items'][$kidx]['description'] = $result['items'][$kidx]['atom:summary'];
+				unset($result['items'][$kidx]['atom:summary']);
+				}
+			if (isset($result['items'][$kidx]['atom:description']))
+				{
+				$result['items'][$kidx]['description'] = $result['items'][$kidx]['atom:description'];
+				unset($result['items'][$kidx]['atom:description']);
+				}
+			if (isset($result['items'][$kidx]['atom:content']))
+				{
+				$temp = $this->my_preg_match("'<content.*?type=[\'\"]text[\'\"].*?>(.*?)</content>'si", $rss_item);
+				if ($temp != '') $result['items'][$kidx]['description'] = $temp;
+					
+				$temp = $this->my_preg_match("'<content.*?type=[\'\"].*?html[\'\"].*?>(.*?)</content>'si", $rss_item);
+				if ($temp != '') $result['items'][$kidx]['content:encoded'] = $temp;
 				
-			$temp = $this->my_preg_match("'<summary.*?>(.*?)</summary>'si", $rss_item);
-			if ($temp != '') $result['items'][$kidx]['description'] = $temp; // Set only if not empty
-				
-			$temp = $this->my_preg_match("'<content.*?type=[\'\"]text[\'\"].*?>(.*?)</content>'si", $rss_item);
-			if ($temp != '') $result['items'][$kidx]['description'] = $temp; // Set only if not empty
-				
-			$temp = $this->my_preg_match("'<content.*?type=[\'\"].*?html[\'\"].*?>(.*?)</content>'si", $rss_item);
-			if ($temp != '') $result['items'][$kidx]['content:encoded'] = $temp; // Set only if not empty
+				unset($result['items'][$kidx]['atom:content']);
+				}
 
 			// Strip HTML tags and other bullshit from TITLE
 			if ($this->stripHTML && $result['items'][$kidx]['title'])
@@ -2209,11 +2445,12 @@ class mYLastRSS
 				$result['items'][$kidx]['description'] = mYLR_Trim(strip_tags($this->unhtmlentities($result['items'][$kidx]['description'])));
 				}
 			
-			$temp = $this->my_preg_match("'<author>.*?<name>(.*?)</name>.*?</author>'si", $rss_item);
-			if ($temp != '') $result['items'][$kidx]['dc:creator'] = $temp; // Set only if not empty
-			
-			$temp = $this->my_preg_match("'<yt:username>(.*?)</yt:username>'si", $rss_item);
-			if ($temp != '') $result['items'][$kidx]['yt:username'] = $temp; // Set only if not empty
+			if (isset($result['items'][$kidx]['atom:author']))
+				{
+				$temp = $this->my_preg_match("'<author>.*?<name>(.*?)</name>.*?</author>'si", $rss_item);
+				if ($temp != '') $result['items'][$kidx]['dc:creator'] = $temp;
+				unset($result['items'][$kidx]['atom:author']);
+				}
 			
 			$result['items'][$kidx]['categories'] = array(); // create array
 			preg_match_all("'<category.*?term=[\'\"](.*?)[\'\"].*?>'si", $rss_item, $categories);
@@ -2226,6 +2463,7 @@ class mYLastRSS
 					}
 				$result['items'][$kidx]['category'] = $result['items'][$kidx]['categories'][0];
 				}
+			unset($result['items'][$kidx]['atom:category']);
 		
 			// Parse ENCLOSURE info
 			preg_match("'<link\b[^<>]+rel=[\'\"]enclosure[\'\"]?[^<>]+>'si", $rss_item, $out_enclosure);
@@ -2256,17 +2494,16 @@ class mYLastRSS
 						}
 					}
 				}
-				
 			if ($this->useOrigLink == TRUE)
 				{
-				if ($result['items'][$kidx]['feedburner:origEnclosureLink'] != '')
+				if (isset($result['items'][$kidx]['feedburner:origEnclosureLink']) && ($result['items'][$kidx]['feedburner:origEnclosureLink'] != ''))
 					{
 					$result['items'][$kidx]['feedburner:trackEnclosure'] = $result['items'][$kidx]['enclosure_url'];
 					$result['items'][$kidx]['enclosure_url'] = $result['items'][$kidx]['feedburner:origEnclosureLink'];
 					unset($result['items'][$kidx]['feedburner:origEnclosureLink']);
 					}
 				
-				if (strpos($result['items'][$kidx]['enclosure_url'],'/0L') > 1)
+				if (isset($result['items'][$kidx]['enclosure_url']) && (strpos($result['items'][$kidx]['enclosure_url'],'/0L') > 1))
 					{
 					$result['items'][$kidx]['feedsportal:trackEnclosure'] = $result['items'][$kidx]['enclosure_url'];
 					$result['items'][$kidx]['enclosure_url'] = mYLR_DecodeFeedPortalURL($result['items'][$kidx]['enclosure_url']);
@@ -2341,6 +2578,7 @@ class mYLastRSS
 		
 		if ($this->_FWRITE_FAIL_COUNT >= $this->max_write_errors) return FALSE;
 		
+        clearstatcache(true, $filepath);
 		if (file_exists($filepath) AND (@filemtime($filepath) > $this->_STARTED_TIME))
 			{
 			$this->_LAST_ERROR_MESSAGES[] = 'Prevent to overwrite more recent file ('.(@filemtime($filepath)-$this->_STARTED_TIME).'s): '.$filepath.'';
@@ -2358,6 +2596,7 @@ class mYLastRSS
 		if (($this->writelock_delay > 0) AND ($this->writelock_ext != ''))
 			{
 			$lockpath = $filepath.''.$this->writelock_ext;
+            clearstatcache(true, $lockpath);
 			if (file_exists($lockpath) AND (@filemtime($lockpath) >= (date('U')-$this->writelock_delay)))
 				{
 				$this->_LAST_ERROR_MESSAGES[] = 'Blocked by write-locking: '.$lockpath.'';
@@ -2413,6 +2652,7 @@ class mYLastRSS
 			{
 			if ($result == TRUE) 
 				{
+                clearstatcache(true, $filepath);
 				if (file_exists($filepath) AND (@filemtime($filepath) > $this->_STARTED_TIME))
 					{
 					$this->_LAST_ERROR_MESSAGES[] = 'Existed file is more recent ('.(@filemtime($filepath)-$this->_STARTED_TIME).'s), rename() aborted: '.$filepath.'';
@@ -2498,6 +2738,536 @@ class mYLastRSS
 		}
 		
 	}
+	
+class mYLR_Client
+	{
+	/* Private properties */
+	
+	var $_source				 = '';
+	var $_transport_name		 = '';
+	var $_transport_class_name	 = '';
+	var $_transport				 = null;
+	var $_transport_options		 = array();
+	
+	/* Constructor */
+	
+	function __construct($options = array())
+		{
+		return $this->mYLR_Client($options);
+		}
+	
+	function mYLR_Client($options = array())
+		{
+		$this->_transport_name = '';
+		$this->_transport_options['user-agent'] = '';
+		$this->_transport_options['time-out'] = 0;
+		
+		if (is_array($options))
+			{
+			if (isset($options['transport']) AND ('' !== $options['transport']))
+				{
+				$this->_transport_name = $options['transport'];
+				}
+			if (isset($options['time-out']) AND (0 < $options['time-out']))
+				{
+				$this->_transport_options['time-out'] = $options['time-out'];
+				}
+			if (isset($options['user-agent']) AND ('' !== $options['user-agent']))
+				{
+				$this->_transport_options['user-agent'] = $options['user-agent'];
+				}
+			if (isset($options['temp-dir']) AND ('' !== $options['temp-dir']))
+				{
+				$this->_transport_options['temp-dir'] = $options['temp-dir'];
+				}
+			}
+			
+		if ($this->_transport_name === 'fopen')
+			{
+			$this->_transport_class_name	 = 'mYLR_Transport_FOpen';
+			$this->_transport				 = new mYLR_Transport_FOpen($this->_transport_options);
+			}
+		else if (($this->_transport_name === 'WpRequests') AND class_exists('WpOrg\Requests\Autoload'))
+			{
+			$this->_transport_class_name	 = 'mYLR_Transport_WpRequests';
+			$this->_transport				 = new mYLR_Transport_WpRequests($this->_transport_options);
+			}
+		else if (($this->_transport_name === 'Requests') AND class_exists('Requests'))
+			{
+			$this->_transport_class_name	 = 'mYLR_Transport_Requests';
+			$this->_transport				 = new mYLR_Transport_Requests($this->_transport_options);
+			}
+		else if (($this->_transport_name === 'Snoopy') AND class_exists('Snoopy'))
+			{
+			$this->_transport_class_name	 = 'mYLR_Transport_Snoopy';
+			$this->_transport				 = new mYLR_Transport_Snoopy($this->_transport_options);
+			}
+		else
+			{
+			// Todo: support custom transport
+			$this->_transport_name			 = 'fopen';
+			$this->_transport_class_name	 = 'mYLR_Transport_FOpen';
+			$this->_transport				 = new mYLR_Transport_FOpen($this->_transport_options);
+			}
+		}
+	
+	/* Public methods */
+	
+	function getTransportName()
+		{
+		return $this->_transport_name;
+		}
+		
+	function getContent($source = '')
+		{
+		$this->_source = $source;
+		$raw_content = $this->_transport->getContent($source);
+		if ($this->isTimedOut())
+			{
+			return '';
+			}
+		return $raw_content;
+		}
+		
+	function isTimedOut()
+		{
+		if (in_array($this->getStatusCode(),array(408, 504, 522, 524)))
+			{
+			return TRUE;
+			}
+		return $this->_transport->isTimedOut();
+		}
+		
+	function getStatusCode()
+		{
+		return intval($this->_transport->getStatusCode(),10);
+		}
+		
+	function getLastErrorMessage()
+		{
+		return $this->_transport->getLastErrorMessage();
+		}
+
+	function isRedirect()
+		{
+		if ('' !== $this->getLastRedirect())
+			{
+			return TRUE;
+			}
+		return $this->_transport->isRedirect();
+		}
+
+	function getLastRedirect()
+		{
+		return $this->_transport->getLastRedirect();
+		}
+	}
+	
+class mYLR_Transport_FOpen
+	{
+	/* Private properties */
+	
+	var $_last_error_message				 = '';
+	
+	/* Constructor */
+	
+	function __construct($options = array())
+		{
+		$this->mYLR_Transport_FOpen($options);
+		}
+	
+	function mYLR_Transport_FOpen($options = array())
+		{
+		}
+	
+	/* Public methods */
+	
+	function getContent($source = '')
+		{
+		$raw_content = ''; 
+		if ($f = @fopen($source, 'rb'))
+			{ 
+            while (!feof($f))
+				{ 
+                $raw_content .= fgets($f, 4096); 
+            	}
+            fclose($f); 
+			}
+		else
+			{
+			$this->_last_error_message = 'Failed to fopen()';
+			return '';
+			}
+		return $raw_content;
+		}
+		
+	function isTimedOut()
+		{
+		return FALSE;
+		}
+		
+	function getStatusCode()
+		{
+		return 0;
+		}
+		
+	function getLastErrorMessage()
+		{
+		return $this->_last_error_message;
+		}
+	
+	function isRedirect()
+		{
+		return FALSE;
+		}
+		
+	function getLastRedirect()
+		{
+		return '';
+		}
+	}
+
+class mYLR_Transport_Snoopy
+	{
+    // https://sourceforge.net/projects/snoopy/
+        
+	/* Private properties */
+	
+	var $_snoopy = null;
+	
+	/* Constructor */
+	
+	function __construct($options = array())
+		{
+		$this->mYLR_Transport_Snoopy($options);
+		}
+	
+	function mYLR_Transport_Snoopy($options = array())
+		{
+		$this->_snoopy = new Snoopy();
+		$this->_snoopy->maxframes		 = 1;
+		$this->_snoopy->maxredirs		 = 4;
+		$this->_snoopy->offsiteok		 = TRUE;
+		$this->_snoopy->passcookies		 = TRUE;
+			
+		if (is_array($options))
+			{
+			if (isset($options['time-out']) AND (0 < $options['time-out']))
+				{
+				$this->_snoopy->read_timeout = $options['time-out'];
+				}
+			if (isset($options['user-agent']) AND ('' !== $options['user-agent']))
+				{
+				$this->_snoopy->agent = $options['user-agent'];
+				}
+			if (isset($options['temp-dir']) AND ('' !== $options['temp-dir']))
+				{
+				$this->_snoopy->temp_dir = $options['temp-dir'];
+				}
+			}
+		}
+	
+	/* Public methods */
+	
+	function getContent($source = '')
+		{
+		$raw_content = '';
+		if (@$this->_snoopy->fetch($source))
+			{
+			if ($this->_snoopy->timed_out === TRUE)
+				{
+				return '';
+				}
+			
+			if (is_Array($this->_snoopy->results))
+				{
+				$raw_content = implode('', $this->_snoopy->results);
+				}
+			else
+				{
+				$raw_content = $this->_snoopy->results;
+				}
+			}
+		return $raw_content;
+		}
+		
+	function isTimedOut()
+		{
+		return $this->_snoopy->timed_out;
+		}
+		
+	function getStatusCode()
+		{
+		return $this->_snoopy->response_code;
+		}
+		
+	function getLastErrorMessage()
+		{
+		return $this->_snoopy->error;
+		}
+	
+	function isRedirect()
+		{
+		if ('' !== $this->getLastRedirect())
+			{
+			return TRUE;
+			}
+		return FALSE;
+		}
+		
+	function getLastRedirect()
+		{
+		return $this->_snoopy->lastredirectaddr;
+		}
+	}
+
+class mYLR_Transport_Requests
+	{
+    // https://github.com/WordPress/Requests
+        
+	/* Private properties */
+	
+	var $_headers = array(
+        );
+	var $_options = array(
+		'verify'         => false,
+		'verifyname'     => false
+		);
+	var $_response					 = null;
+	var $_last_error_message		 = '';
+	var $_is_timed_out				 = FALSE;
+		
+	/* Constructor */
+	
+	function __construct($options = array())
+		{
+		$this->mYLR_Transport_Requests($options);
+		}
+	
+	function mYLR_Transport_Requests($options = array())
+		{
+		Requests::register_autoloader();
+		if (is_array($options))
+			{
+			if (isset($options['time-out']) AND (0 < $options['time-out']))
+				{
+				$this->_options['timeout'] = max(6,$options['time-out']);
+				$this->_options['connect_timeout'] = 5;
+				}
+			if (isset($options['user-agent']) AND ('' !== $options['user-agent']))
+				{
+				$this->_options['useragent'] = $options['user-agent'];
+				}
+			}
+		}
+	
+	/* Public methods */
+	
+	function getContent($source = '')
+		{
+		$raw_content = '';
+		try
+			{
+			$this->_response = Requests::get($source, $this->_headers, $this->_options);
+			if ($this->_response->status_code === 200)
+				{
+				$raw_content = $this->_response->body;
+				}
+			else
+				{
+				return '';
+				}
+			}
+		catch(Exception $e)
+			{
+			$this->_last_error_message = 'Exception('.$e->getCode().'): '.$e->getMessage();
+			if (FALSE !== strpos($e->getMessage(),'timed out'))
+				{
+				// "cURL error 28: Operation timed out after 30000 milliseconds with 0 bytes received"
+				$this->_is_timed_out				 = TRUE;
+				}
+			return '';
+			}
+		return $raw_content;
+		}
+		
+	function isTimedOut()
+		{
+		return $this->_is_timed_out;
+		}
+		
+	function getStatusCode()
+		{
+        if ($this->_response === null) return 0;
+		return $this->_response->status_code;
+		}
+		
+	function getLastErrorMessage()
+		{
+		return $this->_last_error_message;
+		}
+	
+	function isRedirect()
+		{
+		if (null === $this->_response)
+			{
+			return FALSE;
+			}
+		if (0 < $this->_response->redirects)
+			{
+			return TRUE;
+			}
+		if ('' !== $this->getLastRedirect())
+			{
+			return TRUE;
+			}
+		return $this->_response->is_redirect();
+		}
+		
+	function getLastRedirect()
+		{
+        if ($this->_response === null) return '';
+		if (FALSE === is_array($this->_response->history))
+			{
+			return '';
+			}
+		$nb = count($this->_response->history);
+		if (0 === $nb)
+			{
+			return '';
+			}
+		$lastlocation = $this->_response->history[$nb-1]->headers['location'];
+		if (is_array($lastlocation))
+			{
+			return implode('',$lastlocation);
+			}
+		return $lastlocation;
+		}
+	}
+
+class mYLR_Transport_WpRequests
+	{
+    // https://github.com/WordPress/Requests
+        
+	/* Private properties */
+	
+	var $_headers = array(
+        );
+	var $_options = array(
+		'verify'         => false,
+		'verifyname'     => false
+		);
+	var $_response					 = null;
+	var $_last_error_message		 = '';
+	var $_is_timed_out				 = FALSE;
+		
+	/* Constructor */
+	
+	function __construct($options = array())
+		{
+		$this->mYLR_Transport_WpRequests($options);
+		}
+	
+	function mYLR_Transport_WpRequests($options = array())
+		{
+		WpOrg\Requests\Autoload::register();
+		if (is_array($options))
+			{
+			if (isset($options['time-out']) AND (0 < $options['time-out']))
+				{
+				$this->_options['timeout'] = max(6,$options['time-out']);
+				$this->_options['connect_timeout'] = 5;
+				}
+			if (isset($options['user-agent']) AND ('' !== $options['user-agent']))
+				{
+				$this->_options['useragent'] = $options['user-agent'];
+				}
+			}
+		}
+	
+	/* Public methods */
+	
+	function getContent($source = '')
+		{
+		$raw_content = '';
+		try
+			{
+			$this->_response = WpOrg\Requests\Requests::get($source, $this->_headers, $this->_options);
+			if ($this->_response->status_code === 200)
+				{
+				$raw_content = $this->_response->body;
+				}
+			else
+				{
+				return '';
+				}
+			}
+		catch(Exception $e)
+			{
+			$this->_last_error_message = 'Exception('.$e->getCode().'): '.$e->getMessage();
+			if (FALSE !== strpos($e->getMessage(),'timed out'))
+				{
+				// "cURL error 28: Operation timed out after 30000 milliseconds with 0 bytes received"
+				$this->_is_timed_out				 = TRUE;
+				}
+			return '';
+			}
+		return $raw_content;
+		}
+		
+	function isTimedOut()
+		{
+		return $this->_is_timed_out;
+		}
+		
+	function getStatusCode()
+		{
+        if ($this->_response === null) return 0;
+		return $this->_response->status_code;
+		}
+		
+	function getLastErrorMessage()
+		{
+		return $this->_last_error_message;
+		}
+	
+	function isRedirect()
+		{
+		if (null === $this->_response)
+			{
+			return FALSE;
+			}
+		if (0 < $this->_response->redirects)
+			{
+			return TRUE;
+			}
+		if ('' !== $this->getLastRedirect())
+			{
+			return TRUE;
+			}
+		return $this->_response->is_redirect();
+		}
+		
+	function getLastRedirect()
+		{
+        if ($this->_response === null) return '';
+		if (FALSE === is_array($this->_response->history))
+			{
+			return '';
+			}
+		$nb = count($this->_response->history);
+		if (0 === $nb)
+			{
+			return '';
+			}
+		$lastlocation = $this->_response->history[$nb-1]->headers['location'];
+		if (is_array($lastlocation))
+			{
+			return implode('',$lastlocation);
+			}
+		return $lastlocation;
+		}
+	}
 
 // -------------------------------------------------------------------
 // Private functions
@@ -2539,7 +3309,7 @@ function mYLR_CompareSourcesTime($itemA,$itemB)
 	}
 
 // ADVICE: disabled because use CDATA TAG... More usefull for non-utf8 contents
-function mYLR_ContentEncoded ($string,$mode='CDATA')
+function mYLR_ContentEncoded($string,$mode='CDATA')
 	{
 	// Replace by entities
 	//$string = str_replace('&','&amp;',$string);
@@ -2557,7 +3327,7 @@ function mYLR_ContentEncoded ($string,$mode='CDATA')
 	else
 		{
 		// convert < > " ' & 
-		$string=htmlspecialchars($string,$mode);
+		$string=htmlspecialchars($string);
 		}
 	
 	// Remove duplicate entities
@@ -2570,15 +3340,23 @@ function mYLR_ContentEncoded ($string,$mode='CDATA')
 	}
 
 // Convert "Dublin Core" date format to UNIX timestamp (for GMT)
-// Input: date like 2006-06-02T04:45:16-0700 or 2006-12-09T18:24:29Z or 2007-04-06T11:07:01+02:00
+/*
+Input: date like 
+2006-06-02T04:45:16-0700
+2006-12-09T18:24:29Z
+2007-04-06T11:07:01+02:00
+2026-07-09T11:12:14Z
+*/
 function mYLR_DCDate2UnixTimeStamp($DateTime)
 	{
 	$TimeStamp = 0;
-	
 	$timeStr = explode(' ',trim(str_replace(array('-','T','Z',':','+'),' ',$DateTime)),7);
-	$timeDec = trim(str_replace(':','',$timeStr[6]));
+    if (count($timeStr) < 6) {
+        return null;
+    }
+	$timeDec = trim(str_replace(':','',(isset($timeStr[6]) ? $timeStr[6] : '')));
 	$timeSign = substr($DateTime, 19, 1);
-	$TimeStamp = gmmktime($timeStr[3],$timeStr[4],$timeStr[5],$timeStr[1],$timeStr[2],$timeStr[0]);
+	$TimeStamp = gmmktime($timeStr[3],$timeStr[4],intval($timeStr[5], 10),$timeStr[1],$timeStr[2],$timeStr[0]);
 	if (($timeSign != '') AND ($timeSign != 'Z'))
 		{
 		if ($timeSign == '+')
@@ -2591,14 +3369,31 @@ function mYLR_DCDate2UnixTimeStamp($DateTime)
 			}
 		if (strlen($timeDec) <= 2)
 			{
-			$TimeStamp = $TimeStamp + $timeSign * 60 * 60 * intval($timeDec);
+			$TimeStamp = $TimeStamp + $timeSign * 60 * 60 * intval($timeDec, 10);
 			}
 		else
 			{
-			$TimeStamp = $TimeStamp + $timeSign * 60 * 60 * intval(substr($timeDec, 0, 2)) + $timeSign * 60 * intval(substr($timeDec, 2, 2)) ;
+			$TimeStamp = $TimeStamp + $timeSign * 60 * 60 * intval(substr($timeDec, 0, 2), 10) + $timeSign * 60 * intval(substr($timeDec, 2, 2), 10) ;
 			}
 		}
-	
+	return $TimeStamp;
+	}
+
+// Convert "RSS" (RFC 822) date format to UNIX timestamp (for GMT)
+// Input: date like Mon, 15 Aug 05 15:52:01 +0000
+function mYLR_RSSPubDate2UnixTimeStamp($pubDate)
+	{
+    $isRFC822 = true;
+    if (strpos($pubDate,',') !== 3)
+        {
+        $isRFC822 = false;
+        }
+    if ($isRFC822 === true)
+        {
+        // todo fix wrong time zone summer time while winter
+        }
+	$TimeStamp = strtotime($pubDate, date('U'));
+    if ($TimeStamp === false) return null;
 	return $TimeStamp;
 	}
 	
@@ -2617,6 +3412,54 @@ function mYLR_URLunEntities($url)
 	return $url;
 	}
 
+function mYLR_TrimXmlTags($content)
+	{
+	$offsetContent = 0;
+	$newContent = '';
+	$openCmt = strpos($content,'<',$offsetContent);
+	while ($openCmt !== FALSE)
+		{
+		if ($openCmt > $offsetContent)
+			{
+			$newContent .= substr($content,$offsetContent,$openCmt-$offsetContent);
+			}
+		if (substr($content,$openCmt,9) == '<![CDATA[')
+			{
+			// keep CDATA as is
+			$closeCmt = strpos($content,']]>',$openCmt);
+			if ($closeCmt !== FALSE)
+				{
+				$newContent .= substr($content,$openCmt,$closeCmt+3-$openCmt);
+				$offsetContent = $closeCmt+3;
+				}
+			else
+				{
+				break;
+				}
+			}
+		else
+			{
+			$closeCmt = strpos($content,'>',$openCmt);
+			if ($closeCmt !== FALSE)
+				{
+				// clean XML tag
+				$newTag = substr($content,$openCmt,$closeCmt+1-$openCmt);
+				$newTag = mYLR_StripCR($newTag);
+				$newTag = mYLR_Trim($newTag);
+				$newTag = str_replace(' >','>',$newTag);
+				$newContent .= $newTag;
+				$offsetContent = $closeCmt+1;
+				}
+			else
+				{
+				break;
+				}
+			}
+		$openCmt = strpos($content,'<',$offsetContent);
+		}
+	return $newContent;
+	}
+
 function mYLR_StripHTMLcomment($content)
 	{
 	$offsetContent = 0;
@@ -2627,6 +3470,66 @@ function mYLR_StripHTMLcomment($content)
 		if ($closeCmt !== FALSE)
 			{
 			$content = substr($content,0,$openCmt).substr($content,$closeCmt+3);
+			$offsetContent = $openCmt;
+			}
+		else
+			{
+			break;
+			}
+		}
+	return $content;
+	}
+	
+function mYLR_StripHTMLscript($content)
+	{
+	$offsetContent = 0;
+	while (($openCmt = strpos($content,'<script',$offsetContent)) !== FALSE)
+		{
+		$closeCmt = strpos($content,'</script>',$openCmt);
+		
+		if ($closeCmt !== FALSE)
+			{
+			$content = substr($content,0,$openCmt).substr($content,$closeCmt+9);
+			$offsetContent = $openCmt;
+			}
+		else
+			{
+			break;
+			}
+		}
+	return $content;
+	}
+	
+function mYLR_StripHTMLstyle($content)
+	{
+	$offsetContent = 0;
+	while (($openCmt = strpos($content,'<style',$offsetContent)) !== FALSE)
+		{
+		$closeCmt = strpos($content,'</style>',$openCmt);
+		
+		if ($closeCmt !== FALSE)
+			{
+			$content = substr($content,0,$openCmt).substr($content,$closeCmt+8);
+			$offsetContent = $openCmt;
+			}
+		else
+			{
+			break;
+			}
+		}
+	return $content;
+	}
+	
+function mYLR_StripHTMLiframe($content)
+	{
+	$offsetContent = 0;
+	while (($openCmt = strpos($content,'<iframe',$offsetContent)) !== FALSE)
+		{
+		$closeCmt = strpos($content,'</iframe>',$openCmt);
+		
+		if ($closeCmt !== FALSE)
+			{
+			$content = substr($content,0,$openCmt).substr($content,$closeCmt+9);
 			$offsetContent = $openCmt;
 			}
 		else
@@ -2657,7 +3560,6 @@ function mYLR_UnTagsEntities($content)
 function mYLR_StripCDATA($text)
 	{
 	$text = strtr($text, array('&lt;![CDATA['=>'',']]&gt;'=>'','<![CDATA['=>'',']]>'=>''));
-	
 	return $text;
 	}
 	
@@ -2670,6 +3572,7 @@ function mYLR_StripCR($content)
 function mYLR_Trim($texte)
 	{
 	$texte = str_replace(' ',' ',$texte); // Espace étrange, insécable ?
+	$texte = str_replace(array('   ','  '),' ',$texte);
 	$texte = preg_replace('/\s\s+/',' ', $texte); // trim inner duplicated spaces
 	return trim($texte,"\x00..\x1F");
 	}
@@ -2677,7 +3580,6 @@ function mYLR_Trim($texte)
 function mYLR_StripXtorFragment($oldURL)
 	{
 	$newURL = $oldURL;
-	
 	if ($diesePos = strpos($newURL,'#ens_id='))
 		{
 		$newURL = substr($newURL,0,$diesePos);
@@ -2690,14 +3592,26 @@ function mYLR_StripXtorFragment($oldURL)
 		{
 		$newURL = substr($newURL,0,$diesePos);
 		}
-	
-	return $newURL;
+	return trim($newURL);
 	}
+	
+function mYLR_StripAtMediumFragment($oldURL)
+	{
+	$newURL = $oldURL;
+	if ($diesePos = strpos($newURL,'?at_medium='))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
+	if ($diesePos = strpos($newURL,'#at_medium='))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
+	return $newURL;
+    }
 	
 function mYLR_StripUtmFragment($oldURL)
 	{
 	$newURL = $oldURL;
-	
 	if ($diesePos = strpos($newURL,'#utm_'))
 		{
 		$newURL = substr($newURL,0,$diesePos);
@@ -2710,14 +3624,12 @@ function mYLR_StripUtmFragment($oldURL)
 		{
 		$newURL = substr($newURL,0,$diesePos);
 		}
-	
 	return $newURL;
 	}
 	
 function mYLR_StripNedStatFragment($oldURL)
 	{
 	$newURL = $oldURL;
-	
 	if ($diesePos = strpos($newURL,'?ns_campaign='))
 		{
 		$newURL = substr($newURL,0,$diesePos);
@@ -2726,19 +3638,74 @@ function mYLR_StripNedStatFragment($oldURL)
 		{
 		$newURL = substr($newURL,0,$diesePos);
 		}
-	
 	return $newURL;
 	}
 	
 function mYLR_StripRssFragment($oldURL)
 	{
 	$newURL = $oldURL;
-	
 	if ($diesePos = strpos($newURL,'?rss'))
 		{
 		$newURL = substr($newURL,0,$diesePos);
 		}
+	return $newURL;
+	}
 	
+function mYLR_StripCacheFragment($oldURL)
+	{
+	$newURL = $oldURL;
+	if ($diesePos = strpos($newURL,'?cache='))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
+	return $newURL;
+	}
+	
+function mYLR_StripGAFragment($oldURL)
+	{
+	// Google Universal Analytics cookie
+	$newURL = $oldURL;
+	if ($diesePos = strpos($newURL,'?_ga='))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
+	return $newURL;
+	}
+	
+function mYLR_StripItokFragment($oldURL)
+	{
+	// Drupal image token
+	$newURL = $oldURL;
+	if ($diesePos = strpos($newURL,'?itok='))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
+	else if ($diesePos = strpos($newURL,'&itok='))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
+	return $newURL;
+	}
+	
+function mYLR_StripSocSrcFragment($oldURL)
+	{
+	// Origin unknown ; perhaps from sharing buttons ?
+	$newURL = $oldURL;
+	if ($diesePos = strpos($newURL,'?soc_src='))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
+	return $newURL;
+	}
+	
+function mYLR_StripTwitterFragment($oldURL)
+	{
+	// Twitter tracking feature as #.xxxx.twitter
+	$newURL = $oldURL;
+	if ($diesePos = strpos($newURL,'#.'))
+		{
+		$newURL = substr($newURL,0,$diesePos);
+		}
 	return $newURL;
 	}
 	
@@ -2748,7 +3715,15 @@ function mYLR_DecodeXitiURL($oldURL)
 		{
 		$oldURL = substr($oldURL,$posURL+4);
 		}
-		
+	return $oldURL;
+	}
+	
+function mYLR_DecodeAcpmURL($oldURL)
+	{
+	if ($posURL = strpos(strtolower($oldURL),'cible='))
+		{
+		$oldURL = urldecode(substr($oldURL,$posURL+6));
+		}
 	return $oldURL;
 	}
 	
