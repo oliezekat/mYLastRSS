@@ -1,0 +1,123 @@
+
+<rss version="2.0">
+<channel>
+
+<title>Blog de Olivier D. alias ze kat</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg</link>
+<description>I&#39;m french, NTIC project manager, and first volunteer of Y! Messenger Plus unofficial add-on</description>
+<language>en-us</language>
+<lastBuildDate>Thu, 10 Nov 2005 19:01:49 GMT</lastBuildDate>
+
+<item>
+<title>Pr&#233;sidentielle 2007 ; c&#39;est r&#233;solument NON pour l&#39;UMP. Et le PS</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=35</link>
+<description>&#60;p&#62;&#34;Sarko&#34; et l'UMP s'&#233;taient d&#233;j&#224; grill&#233; d'eux-m&#234;mes&#160;avec leur &#60;a href=&#34;http://www.u-m-p.org/newsletter/lettre_information_050905v2.htm&#34;&#62;spam politique&#160;&#60;/a&#62;&#160;(Cf. &#60;a href=&#34;http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=19&#34;&#62;mon post pour les pr&#233;sidentielles de 2007&#60;/a&#62;&#160;), et depuis lundi,&#160;en &#60;a href=&#34;http://totalementcretin.apinc.org/blog/2005/11/06/289-soutenez-sarkozy&#34;&#62;exploitant la crise des banlieues via Google Adwords&#60;/a&#62;&#160;*, ils ont confirm&#233;s ma r&#233;solution de les rayer de ma liste pour les futures &#233;lections &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/19.gif&#34; alt=&#34;Image&#34; /&#62;&#60;/p&#62;
+&#60;p&#62;(*) Info confirm&#233;e par l'UMP, et constat&#233;e de mes yeux.&#60;/p&#62;
+&#60;p&#62;Et, d'apr&#233;s&#160;un &#60;a href=&#34;http://padawan.info/fr/politique/banlieues_et_google_adwords_le_ps_se_reveille.html&#34;&#62;post de Padawan&#60;/a&#62;&#160; (rumeur ?)&#160;, le PS aurait lui aussi &#34;abus&#233;&#34; de cette technique commerciale agressive -&#160;peu recommandable en politique -... Mais, n'ayant p&#251; le constater par moi-m&#234;me (cliquez &#60;a href=&#34;http://www.google.fr/search?hl=fr&#38;q=banlieues&#38;meta=&#34;&#62;ici&#60;/a&#62;&#160;&#160;pour tester), le doute subsiste et le PS garde ses chances &#224; mes yeux.&#60;/p&#62;
+&#60;p&#62;Toutefois, &#224; ce jour, il n'y a toujours pas d'homme, de parti, ou de programme politique susceptible de m&#233;riter mon pouvoir &#233;lectoral &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/02.gif&#34; alt=&#34;Image&#34; /&#62;&#160;&#60;sup&#62;.oO(va falloir vendre ma &#34;voix&#34; sur eB</description>
+<pubDate>Thu, 10 Nov 2005 19:01:49 GMT</pubDate>
+</item>
+
+<item>
+<title>Yahoo! France propose Messenger en i-mode</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=30</link>
+<description>Toutes les&#160;d&#233;tails sur &#60;a href=&#34;http://fr.docs.yahoo.com/messenger/imode/index.html&#34;&#62;cette page&#60;/a&#62;&#38;nbsp</description>
+<pubDate>Wed, 26 Oct 2005 10:42:42 GMT</pubDate>
+</item>
+
+<item>
+<title>TOUTES les actualit&#233;s de Yahoo! France en RS</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=29</link>
+<description>&#60;p&#62;&#60;strong&#62;Je me plaignais que Yahoo! Actualit&#233;s n'&#233;tait pas diffus&#233; en XML/RSS, mais en faisant preuve d'un peu de curiosit&#233;, on arrive &#224; trouver tous les fils de &#60;/strong&#62;&#60;a href=&#34;http://fr.news.yahoo.com/&#34;&#62;&#60;strong&#62;Yahoo! Actualit&#233;s&#60;/strong&#62;&#60;/a&#62;&#60;strong&#62;&#160;...&#60;/strong&#62;&#60;/p&#62;
+&#60;p&#62;Grace au bouton &#34;Ajouter &#224; Mon Yahoo!&#34; de la rubrique &#34;Multimedia, j'avais devin&#233; que le fil &#233;tait :&#60;/p&#62;
+&#60;p&#62;&#60;a href=&#34;http://fr.news.yahoo.com/32/index.html.xml&#34;&#62;http://fr.news.yahoo.com/32/index.html.xml&#60;/a&#62;&#60;/p&#62;
+&#60;p&#62;Exemple pour la rubrique &#34;A la Une&#34;, l'URL de la page est :&#60;/p&#62;
+&#60;p&#62;&#60;a href=&#34;http://fr.news.yahoo.com/303/&#34;&#62;http://fr.news.yahoo.com/303/&#60;/a&#62;&#160;et son fil XML/RSS devient &#60;a href=&#34;http://fr.news.yahoo.com/303/index.html.xml&#34;&#62;http://fr.news.yahoo.com/303/&#60;strong&#62;index.html.xml&#60;/strong&#62;&#60;/a&#62;&#60;/p&#62;
+&#60;p&#62;Cette astuce marche quasiment pour toutes les rubriques principales. Et si vous voulez les infos locales de votre r&#233;gion, c'est l&#233;g&#232;rement diff&#233;rent ; exemple avec le Nord...&#60;/p&#62;
+&#60;p&#62;La page est &#60;a href=&#34;http://fr.fc.yahoo.com/n/nord.html&#34;&#62;http://fr.fc.yahoo.com/n/nord.html&#60;/a&#62;&#160;et son fil &#60;a href=&#34;http://fr.fc.yahoo.com/n/nord.html.xml&#34;&#62;http://fr.fc.yahoo.com/n/nord.html&#60;strong&#62;.xml&#60;/strong&#62;&#60;/a&#62;&#60;/p&#62;
+&#60;p&#62;&#60;strong&#62;Bonne chasse, et gavez p&#244; trop votre &#60;a href=&#34;http://www.sharpreader.net/&#34;&#62;aggr&#233;gateur XML/RSS&#60;/a&#62;&#160;&#60;/strong&#62; &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/09.gif&#34; alt=&#34;</description>
+<pubDate>Tue, 25 Oct 2005 17:11:23 GMT</pubDate>
+</item>
+
+<item>
+<title>Mise en chantier de Y! Messenger Plus 1.7.8</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=28</link>
+<description>&#60;p&#62;Ces derni&#232;res semaines, je me concentrais surtout sur le site de &#60;a href=&#34;http://www.yahooplus.fr.st/&#34;&#62;Y! Messenger Plus&#60;/a&#62;&#160; et les projets du futur SDK (kit de d&#233;veloppement)... A vrai dire, pour Y!MP 1.8-2.0, on en est encore &#224; la phase de r&#233;flexion. D'ailleur, j'invite les membres du&#60;a href=&#34;http://fr.groups.yahoo.com/group/yplus/&#34;&#62;groupe YPLUS&#160;&#60;/a&#62;&#160;&#224; participer aux &#60;a href=&#34;http://fr.groups.yahoo.com/group/yplus/polls&#34;&#62;sondages pour les nouveaut&#233;s &#224; ajouter&#60;/a&#62;&#160;.&#60;/p&#62;
+&#60;p&#62;Toutefois, je pr&#233;vois de publier avant fin d&#233;cembre 2005 &#60;strong&#62;une mise &#224; jour (la version 1.7.8 ?!)&#160;pour inclure le support des skins de &#60;/strong&#62;&#60;a href=&#34;http://music.yahoo.com/musicengine/&#34;&#62;&#60;strong&#62;Yahoo! Music Engine&#60;/strong&#62;&#60;/a&#62;&#60;strong&#62;&#160; dans Y! BitSkin&#60;/strong&#62;, corriger et compl&#233;ter les raccourcis et options de recherche, et surtout, ajouter de nouvelles langues (ou pays)... Notamment des packages pour Taiwan et Hong-Kong.&#60;/p&#62;
+&#60;p&#62;&#60;strong&#62;Par contre, je cherche toujours, - d&#233;sesp&#233;remment -, des volontaires pour la traduction en allemand&#60;/strong&#62; &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/19.gif&#34; alt=&#34;Im</description>
+<pubDate>Thu, 20 Oct 2005 18:00:43 GMT</pubDate>
+</item>
+
+<item>
+<title>Yahoo! France s&#39;essaye timidement au RSS pour les actualit&#233;</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=25</link>
+<description>&#60;p&#62;Alors que le grand fr&#232;re Yahoo! News (au USA) propose des flux RSS de toutes ses actualit&#233;s&#160;depuis &#160;presque 2 ans, et utilise une plateforme &#34;r&#233;cente&#34; dont la pr&#233;sentation est agr&#233;able et personnalisable, Yahoo! France s'obstine &#224; utiliser (pour les Actualit&#233;s)&#160;une vieille plateforme &#34;d&#233;mod&#233;e&#34;, - qui date, je pense, de 2001-2002 -, et surtout, fait la &#34;fine-bouche&#34;&#160;&#224; la diffusion en&#160;XML/RSS &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/02.gif&#34; alt=&#34;Image&#34; /&#62;&#60;/p&#62;
+&#60;p&#62;Mais, depuis peu, la rubrique &#34;Multimedia&#34; propose un bouton &#34;Ajouter &#224; Mon Yahoo!&#34; en utilisant la fonction de contenus en RSS de Mon Yahoo! (Beta).&#60;/p&#62;
+&#60;p&#62;Si vous utilisez un logiciel aggr&#233;gateur de flux XML/RSS, il vous suffit d'ajouter l'URL ci-dessous :&#60;/p&#62;
+&#60;p&#62;&#60;a href=&#34;http://fr.news.yahoo.com/32/index.html.xml&#34;&#62;http://fr.news.yahoo.com/32/index.html.xml&#60;/a&#62;&#60;/p&#62;
+&#60;p&#62;NB: bizarrement, certains post r&#233;cents apparaissent dans le flux avant que la page (avec le texte complet) soit mise en ligne sur Yahoo! Actualit&#233;s &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/11.gif&#34; alt=&#34;I</description>
+<pubDate>Tue, 11 Oct 2005 17:23:31 GMT</pubDate>
+</item>
+
+<item>
+<title>mYLastRSS, projet pour corriger Yahoo! 360&#176; et les Yahoo! Groupe</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=23</link>
+<description>&#60;p&#62;J'ai commenc&#233;, il y a quelques jours, le projet mYLastRSS (classe PHP pour parser des flux RSS) qui est d&#233;riv&#233; du module &#60;a href=&#34;http://lastrss.webdot.cz/&#34;&#62;lastRSS&#60;/a&#62;&#160; (made in Tch&#233;quie, - vive les plombiers du RSS &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/09.gif&#34; alt=&#34;Image&#34; /&#62;&#160;- ) dont il corrige les erreurs et insuffisances.&#60;/p&#62;
+&#60;p&#62;Ce (sous) projet doit r&#233;pondre &#224; quelques besoins pour &#60;a href=&#34;http://www.yahooplus.fr.st/&#34;&#62;Y! Messenger Plus&#160;&#60;/a&#62;&#160;:&#60;/p&#62;
+&#60;p&#62;- Corriger le bug des flux RSS provenant des groupes de Yahoo! France .oO(on dirait que ce n'est plus n&#233;cessaire) &#60;/p&#62;
+&#60;p&#62;- Cr&#233;er une copie d'un flux moyennant quelques am&#233;liorations (nouveau titre, code langue et caract&#232;res, description, logo, etc) pour notamment le flux du &#60;a href=&#34;http://fr.groups.yahoo.com/group/yplus/&#34;&#62;groupe YPLUS&#60;/a&#62;. &#60;/p&#62;
+&#60;p&#62;- &#60;strong&#62;Compiler&#160;plusieurs flux RSS en UN SEUL&#60;/strong&#62;&#160;et proposer un flux unique avec les messages de YPLUS,&#160;les nouveaux skins et portrait-icones de Y!MP pour&#160;contourner la limite de Y!360&#60;/p&#62;
+&#60;p align=&#34;left&#34;&#62;La premi&#232;re phase est finie, reste plus que le syst&#232;me de compilation qui va s'inspirer de la future&#160; version de mYBitSkins (classe PHP pour cr&#233;er des galeries de skins) qui sera prochainement publi&#233;e&#160;sous licence &#160;GNU-GPL... A noter que mYFriendIcons (classe pour des galeries de avatars-portraits) subira le m&#234;me traitement.&#60;/p&#62;
+&#60;p align=&#34;left&#34;&#62;Comme je ne souhaite pas, - aujourd'hui -, publier mYLastRSS en GPL, je pense d&#233;ployer un nouveau site qui permettra aux utilisateurs d'en profiter... Ce site servira &#233;galement de plate-forme pour int&#233;grer un aggr&#233;gateur XML/RSS dans Yahoo! Messenger via Y! Me</description>
+<pubDate>Tue, 11 Oct 2005 11:18:48 GMT</pubDate>
+</item>
+
+<item>
+<title>Ouverture de Yahoo! Podcasts, faites crier les guitares !!!!</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=22</link>
+<description>&#60;p&#62;Ay&#233;, c'est parti, dans la foul&#233;e de Yahoo! Launchcast (radio), Yahoo! Music Unlimited (t&#233;l&#233;chargement payant), et de Yahoo! Search Audio, voil&#224; maintenant en version Beta (et anglais) depuis les labos de Yahoo! Next le...&#160;&#160; &#60;a href=&#34;http://podcasts.yahoo.com/&#34;&#62;&#60;strong&#62;Yahoo! Podcasts&#60;/strong&#62;&#60;/a&#62;&#60;strong&#62;&#160; TADAMMMMMMMM !!!&#60;/strong&#62;&#60;/p&#62;
+&#60;br /&#62;
+&#60;p&#62;On dirait bien que Yahoo! a mis&#233; le paquet sur le commerce musical, esp&#233;rons que &#231;&#224; fera du bruit .oO(dans les portefeuilles, aussi &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/09.gif&#34; alt=&#34;Image&#34; /&#62;)&#60;/p&#62;
+&#60;br /&#62;
+&#60;p&#62;Toutefois, chuis d&#233;&#231;u, c'est juste (pour l'heure ?) un moteur/annuaire de recherche d&#233;di&#233; aux podcasts, et bien que l'on puisse soumettre ses podcasts (via RSS), il faudra bricoler avec GeoCities pour h&#233;berger ses cr&#233;ations... Finalement, &#231;&#224; n'apporte pas grand chose de plus que la fonction Podcasts de Yahoo! Search Audio &#60;img src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/20.gif&#34; alt=&#34;Image&#34;</description>
+<pubDate>Mon, 10 Oct 2005 17:58:54 GMT</pubDate>
+</item>
+
+<item>
+<title>Yahoo! France et Allemagne inaugurent la recherche multilingue</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=21</link>
+<description>&#60;p&#62;Cette nouvelle option permet de rechercher des pages qui contiennent vos mots-cl&#233;s que vous avez saisis en fran&#231;ais mais qui sont pr&#233;sents en anglais (ou autres langues) dans la page.&#60;/p&#62;
+&#60;p&#62;Par exemple, une recherche de &#34;themes yahoo messenger&#34; donnera dans ses r&#233;sultats des pages en anglais qui contiennent &#34;skins yahoo messenger&#34;.&#60;/p&#62;
+&#60;p&#62;Autre avantages, Yahoo! traduit &#224; la vol&#233;e le titre des pages et&#160;leur r&#233;sum&#233;/description dans la page des r&#233;sultats, puis lors du clic, vous affiche la page traduite !&#60;/p&#62;
+&#60;a href=&#34;http://fr.docs.yahoo.com/translator/&#34;&#62;
+&#60;p&#62;Plus d'explications sur cette page&#60;</description>
+<pubDate>Thu, 06 Oct 2005 13:09:22 GMT</pubDate>
+</item>
+
+<item>
+<title>Le photographe Olivier F&#246;llmi repart en voyage pour l&#39;Am&#233;rique lati</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=20</link>
+<description>&#60;p&#62;Connu pour ses photos des habitants de l'Himalaya et du Tibet, &#60;a href=&#34;http://www.follmi.com/&#34;&#62;Olivier F&#246;llmi&#60;/a&#62;&#160;excelle dans l'art de nous montrer des civilisations atypiques (ou plutot tr&#233;s diff&#233;rentes de l'occident) via des photographies ax&#233;es sur les personnes et leurs rites traditionnels avec pour th&#233;mes la sagesse et l'harmonie.&#60;/p&#62;
+&#60;p&#62;Apr&#233;s l'Inde et l'Afrique, c'est aujourd'hui l'heure d'un nouveau d&#233;part pour l'Am&#233;rique latine dans le cadre du projet &#34;Sagesses de l'Humanit&#233;&#34; que vous pourrez suivre sur &#60;a href=&#34;http://www.follmi.com/&#34;&#62;son site perso&#60;/a&#62; &#60;/p&#62;
+&#60;p&#62;Credit photo: O. F&#246;llmi, Jeune fille au temple de Lhasa&#60;/p&#62;
+&#60;p&#62;NB: Je cherche une affiche grand format verticale&#160;(original ou r&#233;-&#233;dition) de la jeune fille de Lhasa. Environ (&#224; vue de nez)&#160;L:90cm sur H:160 cm.&#60;/p&#62;
+&#60;p</description>
+<pubDate>Thu, 06 Oct 2005 11:15:29 GMT</pubDate>
+</item>
+
+<item>
+<title>Pr&#233;sidentielles 2007 ; &#231;&#224; sera sans Sarkozy, l&#39;UMP, et leurs spams politique</title>
+<link>http://blog.360.yahoo.com/blog-FfAVOG01brY4lJgFOIoLXam9c8Pg?p=19</link>
+<description>&#60;p&#62;Il y a quelques jours, je me demandais si j'allais &#34;pouvoir&#34; voter pour quelqu'un en 2007&#160;; le vote blanc et/ou* l'abstention commen&#231;aient &#224; me lasser...&#60;/p&#62;
+&#60;p&#62;Et, avant-hier, en me faisant parvenir un mail non sollicit&#233;, - une cochonnerie de spam -, Mr Sarkozy et son parti, l'UMP, ont gagn&#233;s l'honneur d'&#234;tre ray&#233; de la liste avant le d&#233;part&#160;: - Et en voil&#224; un de moins !!! -.&#160;&#60;/p&#62;
+&#60;p&#62;Ce mail, en plus d'&#234;tre envoy&#233; d'une mani&#232;re que je d&#233;sapprouve, s'av&#232;re tout aussi idiot par son contenu ; ces messieurs nous invitent &#224; participer au d&#233;bat alors que leur forum (sur le &#60;a href=&#34;http://www.u-m-p.org/&#34;&#62;site de l'UMP&#60;/a&#62;) n'est m&#234;me pas encore ouvert ! &#60;img alt=&#34;Image&#34; src=&#34;http://us.i1.yimg.com/us.yimg.com/i/mesg/tsmileys2/11.gif&#34; alt=&#34;Image&#34; /&#62;&#160;...Au moins, &#231;&#224; leur &#233;vitera d'&#234;tre insult&#233;s pour leurs spams.&#60;/p&#62;
+&#60;p&#62;Bien que la CNIL autorise les partis &#224; faire des mails publicitaires, mais - rappelons-le - en ayant eux le consentement PREALABLE du destinataire, je r&#233;serve le m&#234;me destin &#224; tous les partis et hommes politiques qui voudraient s'introduire dans ma boite mail : &#60;strong&#62;&#60;a href=&#34;http://www.u-m-p.org/newsletter/lettre_information_050905v2.htm&#34;&#62;&#60;strong&#62;NON AU SPAM POLITIQUE !!!&#60;/strong&#62;&#60;/a&#62;&#160;.oO(et hop ! un ptit coup de &#60;a href=&#34;http://www.actulab.com/google-bombing.php&#34;&#62;Google-bombing&#60;/a&#62;)&#60;/strong&#62;&#60;/p&#62;
+&#60;p&#62;(*) En France, les m&#233;dias, les politiques, et le syst&#232;me &#233;lectoral ne font pas de distinction entre un vote &#34;blanc&#34; et l'abstention... Alors que les fran&#231;ais appr&#233;cieraient beaucoup d'exprimer leur d&#233;saccord ET que l'on en tiennent com</description>
+<pubDate>Thu, 29 Sep 2005 18:04:40 GMT</pubDate>
+</item>
+
+
+</channel>
+</rss>
+
+<!-- feblg12.mgl.re2.yahoo.com uncompressed/chunked Thu Nov 10 11:24:03 PST 2005 -->

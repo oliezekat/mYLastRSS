@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<rss version="2.0">
+<channel>
+<title>Yahoo! Mon Web Yahoo!</title>
+<link>http://fr.search.yahoo.com/myresults/myresults</link>
+<description>Pages enregistrées dans Mon Web</description>
+<language>en-us</language>
+<copyright>Copyright 2006, Yahoo!</copyright>
+<image>
+<url>http://us.i1.yimg.com/us.yimg.com/i/us/sch/b/mys_logo_xsm.gif</url>
+<title>Mon Yahoo! Search</title>
+<link>http://fr.search.yahoo.com</link>
+<width>144</width>
+<height>18</height>
+</image><item>
+<title>Y! Application Gallery</title>
+<link>http://gallery.yahoo.com/homepage.php</link>
+<guid isPermaLink="false">http://gallery.yahoo.com/homepage.php</guid>
+<pubDate>Fri, 10 Mar 2006 12:29:22 GMT</pubDate>
+</item></channel>
+</rss><!-- w28.search.dcn.yahoo.com uncompressed/chunked Fri Mar 10 04:36:19 PST 2006 -->
