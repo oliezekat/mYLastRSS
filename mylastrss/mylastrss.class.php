@@ -265,7 +265,7 @@ class mYLastRSS
 		GLOBAL $MYLR_FORMATS;
 		GLOBAL $MYLR_XMLNS;
 		
-		if (($Processor != 'unknown') AND ($MYLR_FORMATS[$Processor]))
+		if (($Processor != 'unknown') AND isset($MYLR_FORMATS[$Processor]))
 			{
 			$this->channeltags	 = $MYLR_FORMATS[$Processor]['channel_tags'];
 			$this->itemtags		 = $MYLR_FORMATS[$Processor]['item_tags'];
@@ -650,7 +650,7 @@ class mYLastRSS
 						{
 						$oneresult['items'][$kidx]['category'] = $oneresult['category'];
 						}
-						
+					$oneresult['items'][$kidx]['source_format'] = (isset($oneresult['feed_format']) ? $oneresult['feed_format'] : '');
 					if (isset($item['source']) && ($item['source'] != ''))
 						{
 						$oneresult['items'][$kidx]['source_orig'] = $item['source'];
@@ -836,7 +836,7 @@ class mYLastRSS
 				// cached file is fresh enough, return cached array
 				$result = $this->_LoadCacheFile($cache_file);
 				// set 'cached' to 1 only if cached file is correct
-				if ($result)
+				if (is_array($result))
 					{
 					$result['cached'] = 1;
 					}
@@ -858,7 +858,7 @@ class mYLastRSS
 							{
 							$result = $this->_LoadCacheFile($cache_file);
 							// set 'cached' to 1 only if cached file is correct
-							if ($result)
+							if (is_array($result))
 								{
 								$result['cached'] = 1;
 								}
@@ -868,7 +868,6 @@ class mYLastRSS
 								}
 							}
 						// Don't use cache
-						//$result = FALSE;
 						else $result['cached'] = 0;
 						}
 					else
@@ -903,7 +902,7 @@ class mYLastRSS
 					{
 					$result = $this->_LoadCacheFile($cache_file);
 					// set 'cached' to 1 only if cached file is correct
-					if ($result)
+					if (is_array($result))
 						{
 						$result['cached'] = 1;
 						}
@@ -918,21 +917,20 @@ class mYLastRSS
 		else
 			{
 			$result = $this->Parse($rss_url,$source_kidx);
-			if ($result)
+			if (is_array($result))
 				{
 				$result['cached'] = 0;
 				}
 			}
-			
-		if ($result['cached'] == 1)
-			{
-			$result['updatedTime'] = $cacheFileTime;
-			$this->_SOURCES[$source_kidx]['cachedFileName'] = $cacheFilename;
-			}
-		else if ($result) $result['updatedTime'] = time();
 		
-		if ($result)
+		if (is_array($result))
 			{
+            if ($result['cached'] == 1)
+                {
+                $result['updatedTime'] = $cacheFileTime;
+                $this->_SOURCES[$source_kidx]['cachedFileName'] = $cacheFilename;
+                }
+            else if ($result) $result['updatedTime'] = time();
 			$this->_SOURCES[$source_kidx]['title'] 		 = (isset($result['title']) ? $result['title'] : '');
 			$this->_SOURCES[$source_kidx]['link'] 		 = (isset($result['link']) ? $result['link'] : '');
 			$this->_SOURCES[$source_kidx]['items_count'] = $result['items_count'];
@@ -949,7 +947,6 @@ class mYLastRSS
 			$this->_SOURCES[$source_kidx]['missingSource']	= TRUE;
 			}
 			
-		// return result
 		return $result;
 		}
 	
@@ -1282,6 +1279,10 @@ class mYLastRSS
 		else if (strpos($rss_content_chunk,'<feed') !== FALSE)
 			{
 			return $this->_ParseAtom($rss_url,$source_kidx,$rss_content);
+			}
+		else if (strpos($rss_content_chunk,'<urlset') !== FALSE)
+			{
+			return $this->_ParseSitemap($rss_url,$source_kidx,$rss_content);
 			}
 		else if ((strpos($rss_content_chunk,'<rss') !== FALSE) OR (strpos($rss_content_chunk,'<rdf') !== FALSE))
 			{
@@ -2033,6 +2034,249 @@ class mYLastRSS
 				}
 			}
 		return $content;
+		}
+	
+	function _ParseSitemap($rss_url,$source_kidx,$rss_content)
+		{
+		GLOBAL $MYLR_FORMATS;
+		GLOBAL $MYLR_XMLNS;
+		
+		$result = array();
+		$result['source_url'] 		= $rss_url;
+		$result['source_kidx'] 		= $source_kidx;
+		$result['feed_format'] 		= 'sitemap';
+		$result['generator'] 		= '';
+        
+		// Parse document encoding
+		$result['encoding'] = $this->my_preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content);
+		if ($result['encoding'] != '')
+			{ $this->rsscp = $result['encoding']; } 
+		else
+			{ $this->rsscp = $this->default_cp; } 
+		
+		// detect extension namespaces
+		preg_match_all("'\sxmlns:(.*?)=[\'\"](.*?)[\'\"]'si", $rss_content, $nspaces_results);
+		$result['namespaces'] = $nspaces_results[1];
+		$result['namespaces'] = array_values(array_unique($result['namespaces']));
+		
+		$this->_InitSupportedTags($result['feed_format'],$result['namespaces']);
+        
+		$result['items'] = array(); // create array even if there are no items
+		// Parse ITEMS
+		preg_match_all("'<url(| .*?)>(.*?)</url>'si", $rss_content, $items);
+		$rss_items = $items[2];
+		$i = 0;
+		foreach($rss_items as $rss_item)
+			{
+			$itemResult = array();
+			$rss_item = trim($rss_item);	
+			if ($rss_item === '') continue;
+			// Parse item tags to $itemResult[]
+			foreach($this->itemtags as $itemtag)
+				{
+				$temp = $this->my_preg_match("'<$itemtag\b.*?>(.*?)</$itemtag>'si", $rss_item);
+				if ($temp != '')
+					{
+					if (strpos($itemtag,':') === FALSE)
+						{
+						$itemResult['sitemap:'.$itemtag] = $temp;
+						}
+					else
+						{
+						$itemResult[$itemtag] = $temp;
+						}
+					}
+				}
+			if (count($itemResult) === 0)
+				{
+				continue;
+				}
+
+			if (isset($itemResult['sitemap:loc']))
+				{
+				$itemResult['guid'] = $itemResult['sitemap:loc'];
+				$itemResult['guid_isPermaLink'] = true;
+				$itemResult['link'] = $itemResult['sitemap:loc'];
+				unset($itemResult['sitemap:loc']);
+				}
+            else
+				{
+				continue;
+				}
+			$itemResult['link'] = mYLR_URLunEntities($itemResult['link']);
+                
+			// Search pubdate
+			if (isset($itemResult['news:publication_date']) && ($itemResult['news:publication_date'] != ''))
+				{
+				$itemResult['dc:date'] = $itemResult['news:publication_date'];
+				}
+			else if (isset($itemResult['video:publication_date']) && ($itemResult['video:publication_date'] != ''))
+				{
+				$itemResult['dc:date'] = $itemResult['video:publication_date'];
+				}
+			else if (isset($itemResult['sitemap:lastmod']) && ($itemResult['sitemap:lastmod'] != ''))
+				{
+				$itemResult['dc:date'] = $itemResult['sitemap:lastmod'];
+				unset($itemResult['sitemap:lastmod']);
+				}
+			if ($itemResult['dc:date'] != '')
+				{
+				$timestamp = mYLR_DCDate2UnixTimeStamp($itemResult['dc:date']);
+                if ($timestamp !== null)
+                    {
+                    $itemResult['pubTimeStamp'] = $timestamp;
+                    if ($this->date_format != '')
+                        {
+                        // create pubDate to specified date format
+                        $itemResult['pubDate'] = gmdate($this->date_format, $timestamp);
+                        }
+                    else
+                        {
+                        // create pubDate to GMT/CUT date format
+                        $itemResult['pubDate'] = gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
+                        }
+                    }
+                else
+                    {
+                    $this->_LAST_ERROR_MESSAGES[] = "'$rss_url'".' has bad dc:date format';
+                    }
+				}
+			else
+				{
+				$this->_LAST_ERROR_MESSAGES[] = 'Item '.$itemResult['guid'].' has not pubDate';
+				}
+                
+			if (isset($itemResult['news:title']))
+				{
+				$itemResult['title'] = $itemResult['news:title'];
+				}
+			else if (isset($itemResult['video:title']))
+				{
+				$itemResult['title'] = $itemResult['video:title'];
+				}
+			else if (isset($itemResult['image:title']) && (in_array(substr($item['image:title'], -4), ['.jpg', '.png']) === false))
+				{
+				$itemResult['title'] = $itemResult['image:title'];
+				}
+			$itemResult['title'] = mYLR_StripCR($itemResult['title']);
+                
+			if ($this->kidx_rule == 'guid')
+				{
+				// Create unique index (with MD5) from guid or link for this item
+				if (isset($itemResult['guid']))
+					{
+					$kidx = md5($itemResult['guid']);
+					}
+				else if (isset($itemResult['pubTimeStamp']) AND isset($itemResult['link']))
+					{
+					$kidx = md5($itemResult['pubTimeStamp'].$itemResult['link']);
+					$itemResult['guid'] = $kidx;
+					$itemResult['guid_isPermaLink'] = FALSE;
+					}
+				else
+					{
+					continue;
+					}
+				}
+			else if ($this->kidx_rule == 'link')
+				{
+				// Create unique index (with MD5) from guid or link for this item
+				if (isset($itemResult['link']))
+					{
+					$kidx = md5($itemResult['link']);
+					}
+				else
+					{
+					continue;
+					}
+				}
+			else if ($this->kidx_rule == 'date+title')
+				{
+				// Create unique index (with MD5) from date & title for this item
+				if ((isset($itemResult['pubTimeStamp'])) AND ($itemResult['title'] != ''))
+					{
+					$kidx = md5(gmdate('dmY',$itemResult['pubTimeStamp']).$this->_StandardizedStr($itemResult['title']));
+					}
+				else
+					{
+					continue;
+					}
+				}
+			else
+				{
+				continue;
+				}
+					
+			if (isset($result['items'][$kidx]))
+				{
+				if ($result['items'][$kidx]['pubTimeStamp'] > $itemResult['pubTimeStamp'])
+					{
+					continue;
+					}
+				else
+					{
+					unset($result['items'][$kidx]);
+					}
+				}
+			$result['items'][$kidx] = $itemResult;
+			$result['items'][$kidx]['kidx'] = $kidx;
+                
+			// search desc and content
+			if (isset($result['items'][$kidx]['video:description']))
+				{
+				$result['items'][$kidx]['description'] = $result['items'][$kidx]['video:description'];
+				}
+
+			// Strip HTML tags and other bullshit from TITLE
+			if ($this->stripHTML && $result['items'][$kidx]['title'])
+				$result['items'][$kidx]['title'] = mYLR_Trim(strip_tags($this->unhtmlentities($result['items'][$kidx]['title'])));
+			
+			// Strip HTML tags and other bullshit from DESCRIPTION
+			if ($this->stripHTML && $result['items'][$kidx]['description'])
+				{
+				$result['items'][$kidx]['description'] = mYLR_Trim(strip_tags($this->unhtmlentities($result['items'][$kidx]['description'])));
+				}
+
+			$item_categories = [];
+			if (isset($result['items'][$kidx]['news:keywords']))
+				{
+				$item_categories = explode(',', $result['items'][$kidx]['news:keywords']);
+				}
+			else if (isset($result['items'][$kidx]['video:tag']))
+				{
+				$item_categories = explode(',', $result['items'][$kidx]['video:tag']);
+				}
+			if (count($item_categories) > 0)
+				{
+                $result['items'][$kidx]['categories'] = [];
+				foreach($item_categories as $item_category)
+					{
+					$result['items'][$kidx]['categories'][] = trim($item_category);
+					}
+				$result['items'][$kidx]['category'] = trim($item_categories[0]);
+				}
+            
+			if (isset($result['items'][$kidx]['image:loc']))
+				{
+				$result['items'][$kidx]['media:thumbnail_url'] = $result['items'][$kidx]['image:loc'];
+				}
+			else if (isset($result['items'][$kidx]['video:thumbnail_loc']))
+				{
+				$result['items'][$kidx]['media:thumbnail_url'] = $result['items'][$kidx]['video:thumbnail_loc'];
+				}
+                
+			// Item counter
+			$i++;
+			}
+		// Order or filter items (future feature)
+		uasort($result['items'],'mYLR_CompareItemsTime');
+		// Remove items after limit value (after to order items)
+		if (($this->items_limit != 0) AND ($i > $this->items_limit))
+			{
+			$this->_ArrayPop($result['items'],$this->items_limit);
+			}
+		$result['items_count'] = count($result['items']);
+		return $result;
 		}
 	
 	function _ParseAtom($rss_url,$source_kidx,$rss_content)
@@ -3031,7 +3275,7 @@ class mYLR_Transport_Requests
         );
 	var $_options = array(
 		'verify'         => false,
-		'verifyname'     => false
+		'verifyname'     => false,
 		);
 	var $_response					 = null;
 	var $_last_error_message		 = '';
@@ -3155,7 +3399,7 @@ class mYLR_Transport_WpRequests
         );
 	var $_options = array(
 		'verify'         => false,
-		'verifyname'     => false
+		'verifyname'     => false,
 		);
 	var $_response					 = null;
 	var $_last_error_message		 = '';
