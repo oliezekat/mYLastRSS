@@ -2158,7 +2158,7 @@ class mYLastRSS
 				{
 				$itemResult['title'] = $itemResult['image:title'];
 				}
-			$itemResult['title'] = mYLR_StripCR($itemResult['title']);
+			$itemResult['title'] = mYLR_StripCR(isset($itemResult['title']) ? $itemResult['title'] : '');
                 
 			if ($this->kidx_rule == 'guid')
 				{
@@ -3031,18 +3031,30 @@ class mYLR_Client
 			$this->_transport_class_name	 = 'mYLR_Transport_FOpen';
 			$this->_transport				 = new mYLR_Transport_FOpen($this->_transport_options);
 			}
-		else if (($this->_transport_name === 'WpRequests') AND class_exists('WpOrg\Requests\Autoload'))
+		else if ($this->_transport_name === 'WpRequests')
 			{
+            if (class_exists('WpOrg\Requests\Autoload') === false)
+                {
+                throw new \Exception("Transport class of " . $this->_transport_name . " not found.", 500);
+                }
 			$this->_transport_class_name	 = 'mYLR_Transport_WpRequests';
 			$this->_transport				 = new mYLR_Transport_WpRequests($this->_transport_options);
 			}
-		else if (($this->_transport_name === 'Requests') AND class_exists('Requests'))
+		else if ($this->_transport_name === 'Requests')
 			{
+            if (class_exists('Requests') === false)
+                {
+                throw new \Exception("Transport class of " . $this->_transport_name . " not found.", 500);
+                }
 			$this->_transport_class_name	 = 'mYLR_Transport_Requests';
 			$this->_transport				 = new mYLR_Transport_Requests($this->_transport_options);
 			}
-		else if (($this->_transport_name === 'Snoopy') AND class_exists('Snoopy'))
+		else if ($this->_transport_name === 'Snoopy')
 			{
+            if (class_exists('Snoopy') === false)
+                {
+                throw new \Exception("Transport class of " . $this->_transport_name . " not found.", 500);
+                }
 			$this->_transport_class_name	 = 'mYLR_Transport_Snoopy';
 			$this->_transport				 = new mYLR_Transport_Snoopy($this->_transport_options);
 			}
