@@ -1,0 +1,10 @@
+
+/bin
+/config
+composer.lock
+/var
+/vendor
+phpcs.xml
+phpunit.xml
+.phpunit.result.cache
+*.session
