@@ -78,9 +78,9 @@ class mYLR2RSS extends mYLastRSS
 			
 		if ($this->_MYLR_LAST_RESULT)
 			{
-			header('Content-Type: text/xml; charset="'.$this->cp.'"');
-			//header("Content-Type: application/rss+xml");
-			//header("Content-Type: text/xml");
+            if (headers_sent() === false) {
+                header('Content-Type: text/xml; charset="'.$this->cp.'"', true, 200);
+                }
 			
 			// Set XML header
 			echo("<?xml version=\"1.0\" encoding=\"".$this->cp."\"?>\n");
@@ -152,29 +152,10 @@ class mYLR2RSS extends mYLastRSS
 		    foreach($this->_MYLR_LAST_RESULT['items'] as $item)
 				{
 				// Check if enable, found, or useable enclosure for Media RSS tags
-				if ($this->enable_MediaRSS == FALSE)
+                $isMediaContent = false;
+				if ($this->enable_MediaRSS === true)
 					{
-					$isMediaContent = FALSE;
-					}
-				else if (($item['media:content_url'] != '') OR ($item['media:player_url'] != ''))
-					{
-					$isMediaContent = TRUE;
-					}
-				else if ($item['enclosure_type'] != '')
-					{
-					// Re-use enclosure if right mime-type
-					if (in_array($item['enclosure_type'],$this->_MRSS_CONTENT_MIMES_TYPES))
-						{
-						$isMediaContent = TRUE;
-						}
-					else
-						{
-						$isMediaContent = FALSE;
-						}
-					}
-				else
-					{
-					$isMediaContent = FALSE;
+					$isMediaContent = $this->isItemWithMediaRss($item);
 					}
 
 				// Start Item node
@@ -192,14 +173,17 @@ class mYLR2RSS extends mYLastRSS
 				
 				if ($item['guid'] != '')
 					{
-					if ($item['guid_isPermaLink'] === TRUE)
-						{
-						echo("<guid isPermaLink=\"true\"><![CDATA[".parent::unhtmlentities($item['guid'])."]]></guid>\n"); 
-						}
-					else if ($item['guid_isPermaLink'] === FALSE)
-						{
-						echo("<guid isPermaLink=\"false\"><![CDATA[".$item['guid']."]]></guid>\n"); 
-						}
+					if (isset($item['guid_isPermaLink']))
+                        {
+                        if ($item['guid_isPermaLink'] === true)
+                            {
+                            echo("<guid isPermaLink=\"true\"><![CDATA[".parent::unhtmlentities($item['guid'])."]]></guid>\n"); 
+                            }
+                        else
+                            {
+                            echo("<guid isPermaLink=\"false\"><![CDATA[".$item['guid']."]]></guid>\n"); 
+                            }
+                        }
 					else
 						{
 						echo("<guid><![CDATA[".$item['guid']."]]></guid>\n"); 
@@ -209,13 +193,13 @@ class mYLR2RSS extends mYLastRSS
 					{
 					echo("<guid isPermaLink=\"false\"><![CDATA[".$item['kidx']."]]></guid>\n");
 					}
-				echo("<link><![CDATA[".parent::unhtmlentities($item['link'])."]]></link>\n");
+				echo("<link><![CDATA[".mYLR_ContentEncoded(parent::unhtmlentities($item['link']),'CDATA')."]]></link>\n");
 				
-				if ($item['description'])
+				if (isset($item['description']) && ($item['description'] !== ''))
 					{
 					$description = strip_tags(str_replace(array("\r","\n",'</P>','</p>','</LI>','</li>','<BR>','<br>','<BR />','<br />','<BR/>','<br/>','</div>','</DIV>'),"\n",parent::unhtmlentities($item['description'])));
 					echo("<description><![CDATA[".$description." ]]></description>\n");
-					if ($item['content:encoded'] != '')
+					if (isset($item['content:encoded']) && ($item['content:encoded'] !== ''))
 						{
 						echo("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['content:encoded']),'CDATA')." ]]></content:encoded>\n");
 						}
@@ -224,7 +208,7 @@ class mYLR2RSS extends mYLastRSS
 						echo("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['description']),'CDATA')." ]]></content:encoded>\n");
 						}
 					}
-				else if ($item['content:encoded'])
+				else if (isset($item['content:encoded']) && ($item['content:encoded'] !== ''))
 					{
 					$description = strip_tags(str_replace(array("\r","\n",'</P>','</p>','</LI>','</li>','<BR>','<br>','<BR />','<br />','<BR/>','<br/>','</div>','</DIV>'),"\n",parent::unhtmlentities($item['content:encoded'])));
 					echo("<description><![CDATA[".$description." ]]></description>\n");
@@ -232,20 +216,26 @@ class mYLR2RSS extends mYLastRSS
 					}
 				
 				// Re-use media:content for enclosure if available
-				if (($item['enclosure_url'] == '') AND ($item['media:content_url'] != '') AND ($item['media:content_type'] != ''))
-					{
-					$item['enclosure_url'] = $item['media:content_url'];
-					$item['enclosure_type'] = $item['media:content_type'];
-					if ($item['media:content_fileSize'] != '') $item['enclosure_length'] = $item['media:content_fileSize'];
-					}
+                if ((isset($item['enclosure_url']) === false) || ($item['enclosure_url'] === ''))
+                    {
+                    if (isset($item['media:content_url']) && ($item['media:content_url'] !== '') && isset($item['media:content_type']) && ($item['media:content_type'] !== ''))
+                        {
+                        $item['enclosure_url'] = $item['media:content_url'];
+                        $item['enclosure_type'] = $item['media:content_type'];
+                        if (isset($item['media:content_fileSize']) && ($item['media:content_fileSize'] !== ''))
+                            {
+                            $item['enclosure_length'] = $item['media:content_fileSize'];
+                            }
+                        }
+                    }
 					
 				// Set enclosure
-				if (($item['enclosure_url'] != '') AND ($item['enclosure_type'] != ''))
+				if (isset($item['enclosure_url']) && ($item['enclosure_url'] !== '') && isset($item['enclosure_type']) && ($item['enclosure_type'] !== ''))
 					{
 					echo("<enclosure");
 					foreach($this->_ENCLOSURE_ATTRIBUTES as $attribute)
 						{
-						if ($item['enclosure_'.$attribute] != '') echo(" $attribute=\"".$item['enclosure_'.$attribute]."\"");
+						if (isset($item['enclosure_'.$attribute]) && ($item['enclosure_'.$attribute] !== '')) echo(" $attribute=\"".$item['enclosure_'.$attribute]."\"");
 						}
 					echo("/>\n");
 					}
@@ -254,7 +244,7 @@ class mYLR2RSS extends mYLastRSS
 				if ($isMediaContent == TRUE)
 					{
 					// Content
-					if ($item['media:content_url'] == '')
+					if ((isset($item['media:content_url']) === false) || ($item['media:content_url'] === ''))
 						{
 						if ($item['enclosure_url'] != '') echo("<media:content url=\"".$item['enclosure_url']."\" type=\"".$item['enclosure_type']."\" fileSize=\"".$item['enclosure_length']."\"/>\n");
 						}
@@ -263,86 +253,88 @@ class mYLR2RSS extends mYLastRSS
 						echo("<media:content");
 						foreach($this->_MRSS_CONTENT_ATTRIBUTES as $attribute)
 							{
-							if ($item['media:content_'.$attribute] != '') echo(" $attribute=\"".$item['media:content_'.$attribute]."\"");
+							if (isset($item['media:content_'.$attribute])) echo(" $attribute=\"".$item['media:content_'.$attribute]."\"");
 							}
 						echo("/>\n");
 						}
 					// Thumbnail
-					if ($item['media:thumbnail_url'] != '')
+					if (isset($item['media:thumbnail_url']))
 						{
 						echo("<media:thumbnail");
 						foreach($this->_MRSS_THUMBNAIL_ATTRIBUTES as $attribute)
 							{
-							if ($item['media:thumbnail_'.$attribute] != '') echo(" $attribute=\"".$item['media:thumbnail_'.$attribute]."\"");
+							if (isset($item['media:thumbnail_'.$attribute])) echo(" $attribute=\"".$item['media:thumbnail_'.$attribute]."\"");
 							}
 						echo("/>\n");
 						}
 					// Player
-					if ($item['media:player_url'] != '')
+					if (isset($item['media:player_url']))
 						{
 						echo("<media:player");
 						foreach($this->_MRSS_THUMBNAIL_ATTRIBUTES as $attribute)
 							{
-							if ($item['media:player_'.$attribute] != '') echo(" $attribute=\"".$item['media:player_'.$attribute]."\"");
+							if (isset($item['media:player_'.$attribute])) echo(" $attribute=\"".$item['media:player_'.$attribute]."\"");
 							}
 						echo("/>\n");
 						}
 					
-					if ($item['media:title_type'] != '')
+					if (isset($item['media:title_type']))
 						{
 						echo("<media:title type=\"".$item['media:title_type']."\"><![CDATA[".parent::unhtmlentities($item['media:title'])."]]></media:title>\n");
 						}
-					else if ($item['media:title'] != '')
+					else if (isset($item['media:title']))
 						{
 						echo("<media:title><![CDATA[".parent::unhtmlentities($item['media:title'])."]]></media:title>\n");
 						}
-					if ($item['media:description_type'] != '')
+					if (isset($item['media:description_type']))
 						{
 						echo("<media:description type=\"".$item['media:description_type']."\"><![CDATA[".parent::unhtmlentities($item['media:description'])."]]></media:description>\n");
 						}
-					else if ($item['media:description'] != '')
+					else if (isset($item['media:description']))
 						{
 						echo("<media:description><![CDATA[".parent::unhtmlentities($item['media:description'])."]]></media:description>\n");
 						}
-					if ($item['media:credit_role'] != '')
+					if (isset($item['media:credit_role']))
 						{
 						echo("<media:credit role=\"".$item['media:credit_role']."\"><![CDATA[".parent::unhtmlentities($item['media:credit'])."]]></media:credit>\n");
 						}
-					else if ($item['media:credit'] != '')
+					else if (isset($item['media:credit']))
 						{
 						echo("<media:credit><![CDATA[".parent::unhtmlentities($item['media:credit'])."]]></media:credit>\n");
 						}
-					if ($item['media:copyright_url'] != '')
+					if (isset($item['media:copyright_url']))
 						{
 						echo("<media:copyright url=\"".$item['media:copyright_url']."\"><![CDATA[".parent::unhtmlentities($item['media:copyright'])."]]></media:copyright>\n");
 						}
-					else if ($item['media:copyright'] != '')
+					else if (isset($item['media:copyright']))
 						{
 						echo("<media:copyright><![CDATA[".parent::unhtmlentities($item['media:copyright'])."]]></media:copyright>\n");
 						}
 					}
 					
-				if ($item['dc:date.Taken'] != '') echo("<dc:date.Taken>".$item['dc:date.Taken']."</dc:date.Taken>\n");
+				if (isset($item['dc:date.Taken']) && ($item['dc:date.Taken'] !== '')) echo("<dc:date.Taken>".$item['dc:date.Taken']."</dc:date.Taken>\n");
 				
 				// Categories
-				if ($item['categories'])
+				if (isset($item['categories']) && is_array($item['categories']))
 					{
 					foreach($item['categories'] as $category)
 						{
 						if (trim($category) != '') echo("<category><![CDATA[".htmlspecialchars($category)."]]></category>\n");
 						}
 					}
-				else if ($item['category'])
+				else if (isset($item['category']))
 					{
-					if (trim($category) != '') echo("<category><![CDATA[".htmlspecialchars($item['category'])."]]></category>\n");
+					if (trim($item['category']) != '') echo("<category><![CDATA[".htmlspecialchars($item['category'])."]]></category>\n");
 					}
+                // Not require ; mYLastRSS use this tag to build categories
+                /*
 				if ($item['dc:subject'])
 					{
-					// Not require ; mYLastRSS use this tag to build categories
-					// echo("<dc:subject>".$item['dc:subject']."</dc:subject>\n");
+					echo("<dc:subject>".$item['dc:subject']."</dc:subject>\n");
 					}
-					
-				if ($item['comments'])
+				*/
+                
+				if (isset($item['comments']))
 					{
 					echo("<comments>".$item['comments']."</comments>\n");
 					if ($item['slash:comments'] != '')
@@ -362,7 +354,7 @@ class mYLR2RSS extends mYLastRSS
 						}
 					}
 					
-				if ($item['source'] != '')
+				if ($item['source'] !== '')
 					{
 					if ($item['source_url'] != '')
 						{
@@ -380,8 +372,8 @@ class mYLR2RSS extends mYLastRSS
 						echo("<source><![CDATA[".parent::unhtmlentities($item['source'])."]]></source>\n"); 
 						}
 					}
-				if ($item['live:type'] != '') echo("<live:type>".$item['live:type']."</live:type>\n");
-				if ($item['live:typelabel'] != '') echo("<live:typelabel>".$item['live:typelabel']."</live:typelabel>\n");
+				if (isset($item['live:type'])) echo("<live:type>".$item['live:type']."</live:type>\n");
+				if (isset($item['live:typelabel'])) echo("<live:typelabel>".$item['live:typelabel']."</live:typelabel>\n");
 				
 				if ($item['pubTimeStamp'])
 					{
@@ -407,19 +399,19 @@ class mYLR2RSS extends mYLastRSS
 				
 				
 				// Add or fix author/creator
-				if ($item['author'] != '')
+				if (isset($item['author']) && ($item['author'] !== ''))
 					{
 					if (strpos($item['author'],'@') > 0)
 						{
 						echo("<author>".$item['author']."</author>\n");
-						if ($item['dc:creator'] != '')
+						if (isset($item['dc:creator']))
 							{
 							echo("<dc:creator>".$item['dc:creator']."</dc:creator>\n");
 							}
 						}
 					else if ($this->item_author_email != '')
 						{
-						if ($item['dc:creator'] != '')
+						if (isset($item['dc:creator']))
 							{
 							echo("<author>".$this->item_author_email." (".$item['dc:creator'].")</author>\n");
 							echo("<dc:creator>".$item['dc:creator']."</dc:creator>\n");
@@ -432,7 +424,7 @@ class mYLR2RSS extends mYLastRSS
 						}
 					else
 						{
-						if ($item['dc:creator'] != '')
+						if (isset($item['dc:creator']))
 							{
 							echo("<dc:creator>".$item['dc:creator']."</dc:creator>\n");
 							}
@@ -442,7 +434,7 @@ class mYLR2RSS extends mYLastRSS
 							}
 						}
 					}
-				else if ($item['dc:creator'])
+				else if (isset($item['dc:creator']))
 					{
 					if ($this->item_author_email != '')
 						{
@@ -512,6 +504,27 @@ class mYLR2RSS extends mYLastRSS
 			}
 		
 		return $this->_MYLR_LAST_RESULT;
+		}
+	
+	function isItemWithMediaRss($item)
+		{
+        if (isset($item['media:content_url']) && ($item['media:content_url'] !== ''))
+            {
+            return true;
+            }
+        if (isset($item['media:player_url']) && ($item['media:player_url'] !== ''))
+            {
+            return true;
+            }
+        if (isset($item['enclosure_type']) && ($item['enclosure_type'] !== ''))
+            {
+            // Re-use enclosure if right mime-type
+            if (in_array($item['enclosure_type'], $this->_MRSS_CONTENT_MIMES_TYPES))
+                {
+                return true;
+                }
+            }
+        return false;
 		}
 	
 	function htmlampchars($string)
