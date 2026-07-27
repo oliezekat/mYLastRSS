@@ -1,0 +1,174 @@
+<!-- sample from https://oliezekat.wordpress.com/tag/mylastrss/feed/rdf/ -->
+<?xml version="1.0" encoding="UTF-8"?><rdf:RDF
+	xmlns="http://purl.org/rss/1.0/"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:admin="http://webns.net/mvcb/"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:georss="http://www.georss.org/georss" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" >
+<channel rdf:about="https://oliezekat.wordpress.com">
+	<title>mYLastRSS &#8211; Olivier D. ze kat</title>
+	<link>https://oliezekat.wordpress.com</link>
+	<description>Blog personnel</description>
+	<dc:date>2023-10-01T15:48:22Z	</dc:date>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<sy:updateBase>2000-01-01T12:00+00:00</sy:updateBase>
+	<admin:generatorAgent rdf:resource="http://wordpress.com/" />
+	<items>
+		<rdf:Seq>
+					<rdf:li rdf:resource="https://oliezekat.wordpress.com/2009/07/04/mise-a-jour-de-mylastrss-pour-les-serveurs-tres-sollicites/"/>
+					<rdf:li rdf:resource="https://oliezekat.wordpress.com/2007/03/05/la-classe-mylastrss-en-php-a-lepreuve-du-feu/"/>
+					<rdf:li rdf:resource="https://oliezekat.wordpress.com/2007/01/27/methodes-pour-generer-un-nuage-de-tags-a-partir-des-depeches-de-presse-comme-sur-ymobactus-avec-yahoo-actualites/"/>
+					<rdf:li rdf:resource="https://oliezekat.wordpress.com/2007/01/06/apercu-de-la-partie-visible-dune-ligne-de-vie/"/>
+				</rdf:Seq>
+	</items>
+</channel>
+<item rdf:about="https://oliezekat.wordpress.com/2009/07/04/mise-a-jour-de-mylastrss-pour-les-serveurs-tres-sollicites/">
+	<title>Mise à jour de mYLastRSS pour les serveurs trés sollicités</title>
+	<link>https://oliezekat.wordpress.com/2009/07/04/mise-a-jour-de-mylastrss-pour-les-serveurs-tres-sollicites/</link>
+
+	<dc:creator><![CDATA[Olivier D. alias ze kat]]></dc:creator>
+	<dc:date>2009-07-04T12:00:12Z</dc:date>
+			<dc:subject><![CDATA[Archives]]></dc:subject>
+		<dc:subject><![CDATA[Projets]]></dc:subject>
+		<dc:subject><![CDATA[Développement Web]]></dc:subject>
+		<dc:subject><![CDATA[mYLastRSS]]></dc:subject>
+		<dc:subject><![CDATA[PHP]]></dc:subject>
+		<dc:subject><![CDATA[RSS]]></dc:subject>
+
+			<description><![CDATA[Dans le cadre de la refonte du moteur de Buzz de Y!MobActus (victime de son succés), j&#8217;ai corrigé plusieurs problèmes et ajouté des options pour faciliter les situations de fortes charges d&#8217;audience&#8230; Site officiel de mYLastRSS sur SourceForge Dernières modifications : Support new FeedBurner/Google feed proxy Update Snoopy component to 1.2.4 Fix while Snoopy fetch &#8230; <a href="https://oliezekat.wordpress.com/2009/07/04/mise-a-jour-de-mylastrss-pour-les-serveurs-tres-sollicites/" class="more-link">Lire la suite <span class="screen-reader-text">Mise à jour de mYLastRSS pour les serveurs trés&#160;sollicités</span></a>]]></description>
+		<content:encoded><![CDATA[<p>Dans le cadre de la refonte du moteur de Buzz de <a href="http://www.miaouw.net/categories/projets/ymobactus/">Y!MobActus</a> (victime de son succés), j&rsquo;ai corrigé plusieurs problèmes et ajouté des options pour faciliter les situations de fortes charges d&rsquo;audience&#8230;<br />
+<span id="more-89"></span><br />
+<a href="https://sourceforge.net/projects/mylastrss/">Site officiel de <strong>mYLastRSS sur SourceForge</strong></a></p>
+<p>Dernières modifications :</p>
+<ul>
+<li>Support new FeedBurner/Google feed proxy</li>
+<li>Update Snoopy component to 1.2.4</li>
+<li>Fix while Snoopy fetch empty content (use PHP socket)</li>
+<li>Add &lsquo;GetCache&rsquo; method (work only with sources array)</li>
+<li>Add &lsquo;kidx_rule&rsquo; property to define what use as unique item&rsquo;s id (guid, date &amp; title, or link values)</li>
+<li>Enhanced mYLR2RSS class to produce description without HTML tags</li>
+<li>Fix bugs for UTF8 output</li>
+<li>Support FeedSky like FeedBurner</li>
+<li>Support FeedsPortal links (only RSS or RDF)</li>
+<li>Support more HTML entities</li>
+</ul>
+<p>Vous noterez la méthode GetCache() qui permet de rapidement modifier une page pour l&rsquo;obliger à toujours utiliser le &laquo;&nbsp;cache&nbsp;&raquo; en remplaçant simplement la méthode Get() par celle-ci.<br />
+L&rsquo;astuce est de faire une copie du script, qui garde la méthode Get(), pour le faire exécuter par le CronTab de son serveur. </p>
+<p>La nouvelle option &laquo;&nbsp;kidx_rule&nbsp;&raquo; avec le parametre &laquo;&nbsp;date+title&nbsp;&raquo; vous permettra de faire un dédoublonnage (des articles identiques) plus efficace quand vous fusionnez des flux RSS dont les articles identiques ont des URL (ou GUID) différentes.</p>
+<p>Enfin, l&rsquo;option &laquo;&nbsp;useOrigLink&nbsp;&raquo; est capable de retrouver les URL originales des articles diffusés dans des flux FeedBurner/Google, FeedSky, ou FeedsPortal.</p>
+<p>NB: normalement, mYLastRSS est encore compatible avec les scripts (et tutoriels) de <a href="http://lastrss.oslab.net/">lastRSS</a>.</p>
+]]></content:encoded>
+	
+	</item>
+<item rdf:about="https://oliezekat.wordpress.com/2007/03/05/la-classe-mylastrss-en-php-a-lepreuve-du-feu/">
+	<title>La classe mYLastRSS en PHP à l&#8217;épreuve du feu !</title>
+	<link>https://oliezekat.wordpress.com/2007/03/05/la-classe-mylastrss-en-php-a-lepreuve-du-feu/</link>
+
+	<dc:creator><![CDATA[Olivier D. alias ze kat]]></dc:creator>
+	<dc:date>2007-03-05T11:26:47Z</dc:date>
+			<dc:subject><![CDATA[Archives]]></dc:subject>
+		<dc:subject><![CDATA[Projets]]></dc:subject>
+		<dc:subject><![CDATA[mYLastRSS]]></dc:subject>
+		<dc:subject><![CDATA[PHP]]></dc:subject>
+		<dc:subject><![CDATA[RSS]]></dc:subject>
+		<dc:subject><![CDATA[YMobActus]]></dc:subject>
+
+			<description><![CDATA[La dernière et récente mise-à-jour de la classe mYLastRSS (pour les applications en PHP) comporte des corrections suite aux problèmes rencontrés lors de son utilisation sur le site de Y!M Plus, le site Y!MobActus pour mobile, et les expériences Life-Line. Ces projets avec mYLastRSS ont montrés qu&#8217;elle répondait à mes besoins actuels, et que la &#8230; <a href="https://oliezekat.wordpress.com/2007/03/05/la-classe-mylastrss-en-php-a-lepreuve-du-feu/" class="more-link">Lire la suite <span class="screen-reader-text">La classe mYLastRSS en PHP à l&#8217;épreuve du feu&#160;!</span></a>]]></description>
+		<content:encoded><![CDATA[<p>La dernière et récente mise-à-jour de la <a href="http://sourceforge.net/projects/mylastrss/">classe mYLastRSS</a> (pour les applications en PHP) comporte des corrections suite aux problèmes rencontrés lors de son utilisation sur le site de <a href="http://ymplus.sourceforge.net">Y!M Plus</a>, le site <a href="http://ymobactus.miaouw.net">Y!MobActus pour mobile</a>, et les <a href="categories/projets/experiences/life-line/">expériences Life-Line</a>.<br />
+<strong>Ces projets avec mYLastRSS ont montrés qu&rsquo;elle répondait à mes besoins actuels, et que la classe avait encore un bon potentiel &#8211; sous le capot -.</strong><br />
+<span id="more-65"></span><br />
+A l&rsquo;origine, j&rsquo;espérais que la classe permettrait de réunir 4 à 5 sources, hors avec l&rsquo;expérience de <a href="http://olie-ze-kat.life-line.miaouw.net">ma ligne-de-vie personnelle</a> j&rsquo;ai pû en aggréger une quinzaine ! Et en supprimant le support des balises RSS dont on n&rsquo;a pas besoin, il devrait être possible d&rsquo;en ajouter beaucoup plus.<br />
+Surtout, avec mes optimisations du système de mise-en-mémoire &laquo;&nbsp;Cache&nbsp;&raquo;, plus la classe est sollicitée, meilleur est son temps de réponse. Par contre, le délais de mise-à-jour du &laquo;&nbsp;Cache&nbsp;&raquo; s&rsquo;allonge proportionnellement au nombre de sources que l&rsquo;on aggrége.</p>
+<p><u>Les améliorations que j&rsquo;envisage concernent :</u></p>
+<ul>
+<li>la personnalisation des balises RSS supportées pour se restreindre au juste nécessaire,</li>
+<li>temporiser la mise-à-jour du &laquo;&nbsp;Cache&nbsp;&raquo; selon le durée d&rsquo;exécution du script PHP,</li>
+<li>ajouter le support des sources au format Atom.</li>
+</ul>
+<p><s>Pour les développeurs curieux et initiés, sachez que le &laquo;&nbsp;cache&nbsp;&raquo; de mYLastRSS est au format JSON dont on entend souvent parler depuis que des géants comme Google ou Yahoo! proposent des API avec ce format.</s></p>
+]]></content:encoded>
+	
+	</item>
+<item rdf:about="https://oliezekat.wordpress.com/2007/01/27/methodes-pour-generer-un-nuage-de-tags-a-partir-des-depeches-de-presse-comme-sur-ymobactus-avec-yahoo-actualites/">
+	<title>Méthodes pour générer un nuage de tags à partir des dépêches de presse (comme sur Y!MobActus avec Yahoo! Actualités)</title>
+	<link>https://oliezekat.wordpress.com/2007/01/27/methodes-pour-generer-un-nuage-de-tags-a-partir-des-depeches-de-presse-comme-sur-ymobactus-avec-yahoo-actualites/</link>
+
+	<dc:creator><![CDATA[Olivier D. alias ze kat]]></dc:creator>
+	<dc:date>2007-01-27T17:59:33Z</dc:date>
+			<dc:subject><![CDATA[Idées]]></dc:subject>
+		<dc:subject><![CDATA[Opinions]]></dc:subject>
+		<dc:subject><![CDATA[Projets]]></dc:subject>
+		<dc:subject><![CDATA[labs.miaouw.net]]></dc:subject>
+		<dc:subject><![CDATA[mYLastRSS]]></dc:subject>
+		<dc:subject><![CDATA[PHP]]></dc:subject>
+		<dc:subject><![CDATA[RSS]]></dc:subject>
+		<dc:subject><![CDATA[Tagging]]></dc:subject>
+		<dc:subject><![CDATA[WAP / XHTML MP]]></dc:subject>
+		<dc:subject><![CDATA[Yahoo!]]></dc:subject>
+		<dc:subject><![CDATA[YMobActus]]></dc:subject>
+
+			<description><![CDATA[Il y a presque un an, j&#8217;avais trouvé audacieux l&#8217;expérience non-officielle Yahoo! News Tag Soup de John Herren qui propose un nuage de tags associés aux actualités en anglais de Yahoo! News (aux USA). Toutefois, je suis un peu déçu du résultat obtenu, notamment de sa pertinence. D&#8217;où l&#8217;expérience menée avec le service pour les &#8230; <a href="https://oliezekat.wordpress.com/2007/01/27/methodes-pour-generer-un-nuage-de-tags-a-partir-des-depeches-de-presse-comme-sur-ymobactus-avec-yahoo-actualites/" class="more-link">Lire la suite <span class="screen-reader-text">Méthodes pour générer un nuage de tags à partir des dépêches de presse (comme sur Y!MobActus avec Yahoo!&#160;Actualités)</span></a>]]></description>
+		<content:encoded><![CDATA[<p>Il y a presque un an, <strong>j&rsquo;avais trouvé audacieux l&rsquo;expérience non-officielle <a href="http://yahoo.theherrens.com/index.php">Yahoo! News Tag Soup</a> de <a href="http://360.yahoo.com/jhherren">John Herren</a></strong> qui propose un nuage de tags associés aux actualités en anglais de Yahoo! News (aux USA).</p>
+<p>Toutefois, je suis un peu déçu du résultat obtenu, notamment de sa pertinence. D&rsquo;où l&rsquo;expérience menée avec le service pour les navigateurs mobiles de <a href="http://ymobactus.miaouw.net">Y! MobActus</a>&#8230;<br />
+<span id="more-57"></span><br />
+<img align="right" class="alignright" width="225" src="https://i0.wp.com/farm1.static.flickr.com/188/370702055_029257e925_m.jpg" />Je lui reproche que le nuage de tags est pollué par le nom des agences de presse, et que en conséquence, les tags pertinents liés aux évènements récents apparaisse en trés petit. Et, il y a beaucoup trop de tags pour que l&rsquo;on puisse d&rsquo;un seul coup d&rsquo;oeil repérer les nouveaux mots-clés. Enfin, son système a, au moins, besoin d&rsquo;une bonne heure pour générer le nuage de tags.</p>
+<p>Par contre, John explique généreusement (en anglais) <a href="http://yahoo.theherrens.com/index.php?display=about">comment Yahoo! News Tag Soup fonctionne</a>, et çà permet de comprendre les causes des défauts de son service ;</p>
+<ul>
+<li>Il utilise une base de donnée via la &laquo;&nbsp;grosse&nbsp;&raquo; application MagpieRSS pour stocker les actualités puis pour filtrer les doublons* alors que les flux RSS de Yahoo! News comporte le paramètre GUID qui permet de les identifier.<br />
+<em>(*) à causes des nombreuses agences de presse qui alimentent Yahoo! News.</em></li>
+<li>Son service utilise les API de Yahoo! Search pour récupérer une suggestion de mots-clés associés à la page de l&rsquo;actualité. D&rsquo;une part çà doit demander des centaines de requêtes vers Yahoo! qui explique le gros délais de mise-à-jour. Et, c&rsquo;est la raison pour laquelle les noms des agences de presse apparaissent si souvent et si gros.</li>
+<li>Enfin, il n&rsquo;y a aucune disposition pour normaliser les mots-clés similaires, les filtrer, et ainsi réduire la taille du nuage à l&rsquo;essentiel.</li>
+</ul>
+<p>En définitive, John a été obligé de créer son propre moteur de recherche pour afficher la liste des actualités liées à un tag, alors que <a href="http://ymobactus.miaouw.net/tags.php?sidebar=1" target="_search">le panneau latéral de Y!MobActus pour Firefox</a> peut se permettre de proposer les résultats de recherche de Yahoo! Actualités.</p>
+<blockquote><p>Parfois, il est plus facile de faire mieux que de critiquer !</p></blockquote>
+<p>Mis à part de gros efforts pour améliorer la pertinence des tags, je pense avoir eu moins de mal que John pour créer le même service sur Y!MobActus ; <strong>la partie la plus pénible pour récupérer les actualités en gérant les doublons est assurée par <a href="http://sourceforge.net/projects/mylastrss/">mYLastRSS</a></strong> qui sert déjà à alimenter le contenu des pages. Puis, je n&rsquo;utilise pas une lourde plateforme de dialogue pour interroger et traiter les API de Yahoo! Search. Et détails non négligeables, le nuage est généré quasiment* en temps-réel à la demande des internautes.<br />
+<em>(*) Y!MobActus utilise un cache avec un délais maximum de 20mn de mise-à-jour pour ne pas consommer toute la bande-passante du serveur.</em></p>
+<blockquote><p>Les spécificités de Yahoo! Actualités facilitent l&rsquo;extraction de tags.</p></blockquote>
+<p><img align="right" class="alignright" width="144" src="https://i0.wp.com/farm1.static.flickr.com/183/370702046_1c083c3fa5_m.jpg" />Ma méthode se base d&rsquo;abord sur le fait que Yahoo! Actualités publie les dépêches de plusieurs agences de presse et qu&rsquo;il est fréquent de voir plusieurs dépêches liées au même évènement. Et, que <strong>les mots-clés les plus importants, et donc pertinents, d&rsquo;une actualité figurent à la fois dans le titre et le résumé de la dépêche</strong>. Ce qui est certainement une démarche intentionnelle des rédacteurs.</p>
+<p>La démarche technique consiste à parcourir le tableau fourni par mYLastRSS pour étudier les   actualités une-par-une ; la première étape remplit un premier tableau avec les mots du titre de la dépêche en le débarrassant des ponctuations, expressions de coordination, adjectifs, superlatifs, et divers mots fréquents sans intérêt tout en normalisant les mots sans majuscules ou accents*. Et, on applique le même traitement en créant un autre tableau des mots du résumé.<br />
+(*) pour contourner les erreurs d&rsquo;orthographe des rédacteurs.</p>
+<p>Enfin, <strong>on calcule l&rsquo;intersection* des deux tableaux de mots-clés, du titre et du résumé d&rsquo;une actualité</strong>, et on insère le résultat dans un tableau global tout en comptant les redondances des mots insérés par les actualités précédentes.<br />
+<em>(*) révisez vos cours d&rsquo;algèbre vus en mathématique.</em></p>
+<p>Il suffit ensuite de classer le tableau global par ordre alphabétique, supprimer les tags rarement cités, et afficher ceux qui restent en adaptant leur taille à la valeur du compteur de redondance. Je vous conseille de fixer une taille maximum qui évitera qu&rsquo;un seul mot-clé monopolise le nuage de tags.</p>
+<p>Je complète l&rsquo;analyse <strong>en repérant les mots qui sont écrit sous différentes formes, &#8211; au pluriel ou au féminin -, pour les normaliser au singulier et améliorer les calculs de redondance.</strong> Et, quand le nuage comporte des tags composés de plusieurs mots, j&rsquo;applique un filtre* pour supprimer les tags d&rsquo;un seul mot qui s&rsquo;y référent.<br />
+<em>(*) le filtre est appliqué avant l&rsquo;insertion des tags d&rsquo;une actualité dans le tableau global.</em></p>
+<p>Enfin, &#8211; pour le fun -, il y a quelques dispositions pour mettre en avant la compétition médiatique des candidats aux élections présidentielles <strong>:op</strong></p>
+]]></content:encoded>
+	
+	</item>
+<item rdf:about="https://oliezekat.wordpress.com/2007/01/06/apercu-de-la-partie-visible-dune-ligne-de-vie/">
+	<title>Aperçu et explications de la partie visible d&#8217;une &#171; Ligne de vie &#187;</title>
+	<link>https://oliezekat.wordpress.com/2007/01/06/apercu-de-la-partie-visible-dune-ligne-de-vie/</link>
+
+	<dc:creator><![CDATA[Olivier D. alias ze kat]]></dc:creator>
+	<dc:date>2007-01-06T18:06:06Z</dc:date>
+			<dc:subject><![CDATA[Projets]]></dc:subject>
+		<dc:subject><![CDATA[labs.miaouw.net]]></dc:subject>
+		<dc:subject><![CDATA[LiFE-LiNE]]></dc:subject>
+		<dc:subject><![CDATA[LiFE2Front]]></dc:subject>
+		<dc:subject><![CDATA[Lifelog]]></dc:subject>
+		<dc:subject><![CDATA[Lifestream]]></dc:subject>
+		<dc:subject><![CDATA[mYLastRSS]]></dc:subject>
+		<dc:subject><![CDATA[RSS]]></dc:subject>
+		<dc:subject><![CDATA[Vie quotidienne]]></dc:subject>
+
+			<description><![CDATA[Je viens de terminer &#171;&#160;une&#160;&#187; première version de la partie visible du concept de &#171;&#160;Ligne de vie&#160;&#187;. J&#8217;ai eu beaucoup d&#8217;hésitations pour son aspect et la méthode de navigation. J&#8217;ai même au début envisagé de faire ressembler cette page à un blog, puis finalement, j&#8217;ai cherché un moyen de concrétiser visuellement l&#8217;expression &#171;&#160;Ligne de vie&#160;&#187;&#8230; &#8230; <a href="https://oliezekat.wordpress.com/2007/01/06/apercu-de-la-partie-visible-dune-ligne-de-vie/" class="more-link">Lire la suite <span class="screen-reader-text">Aperçu et explications de la partie visible d&#8217;une &#171;&#160;Ligne de vie&#160;&#187;</span></a>]]></description>
+		<content:encoded><![CDATA[<p>Je viens de terminer &laquo;&nbsp;une&nbsp;&raquo; première version de la partie visible du concept de &laquo;&nbsp;Ligne de vie&nbsp;&raquo;. J&rsquo;ai eu beaucoup d&rsquo;hésitations pour son aspect et la méthode de navigation. J&rsquo;ai même au début envisagé de faire ressembler cette page à un blog, puis finalement, j&rsquo;ai cherché un moyen de concrétiser visuellement l&rsquo;expression &laquo;&nbsp;Ligne de vie&nbsp;&raquo;&#8230;<br />
+<span id="more-53"></span><br />
+<img align="right" src="https://i0.wp.com/farm1.static.flickr.com/156/347605323_a58e242af2_m.jpg" alt="Aperçu d'une ligne de vie" /><br />
+<strong>J&rsquo;ai choisi une mise en page linéaire sans colonnes latérales où les entrées sont classées par date de publication, à l&rsquo;image de l&rsquo;aperçu d&rsquo;un fil RSS.</strong><br />
+Le lecteur a la possibilité de filtrer les entrées selon leur type (photo, vidéo, article de blog, marques-pages Internet ou vidéos préférées). Mais comme le principal intêret de ce service est de montrer nos publications (ou partages) récents, <strong>il y a une ligne-de-temps des 35 derniers jours qui permet de voir rapidement si on a publié quelque chose&#8230;</strong> D&rsquo;où les options de filtrage des entrées de la semaine en cours, du mois, ou de l&rsquo;année.</p>
+<p>Il n&rsquo;y a pas eu de grosses difficultés techniques, l&rsquo;essentiel du travail étant accompli par la classe <a href="http://sourceforge.net/projects/mylastrss/">mYLastRSS</a> pour télécharger les différentes sources et par la fonction <em>getElementsByClassName</em> pour le filtrage des entrées&#8230; Et oui, il n&rsquo;y a pas d&rsquo;AJAX, le code source de la page contient toutes les entrées, &#8211; plus d&rsquo;une centaine -, et c&rsquo;est des requêtes en JavaScript qui cachent celles que le lecteur (ou la lectrice) veut filtrer.<br />
+J&rsquo;ai soigné le code HTML et CSS pour les imprimantes et les mobiles&#8230; Mais comme le poids de la page est trés gros, il faudra une version spéciale pour l&rsquo;édition Mobile&#8230;</p>
+<p>Vous pourrez obtenir <a href="http://www.flickr.com/photos/olie_ze_kat/347605323/">plus d&rsquo;explications avec la capture d&rsquo;écran sur Flickr</a> (voir les notes), ou juger par vous même avec <a href="http://olie-ze-kat.life-line.miaouw.net/">ma propre &laquo;&nbsp;Ligne de vie&nbsp;&raquo;</a>.</p>
+<p>Finalement, j&rsquo;ai trés envie de me lancer dans la conception d&rsquo;un service de création de &laquo;&nbsp;Lignes de vie&nbsp;&raquo;, d&rsquo;autant que c&rsquo;est un outils à connotation sociale. </p>
+<p>NdlA: bonne année ;o)</p>
+]]></content:encoded>
+	
+	</item>
+</rdf:RDF>

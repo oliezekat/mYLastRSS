@@ -1,0 +1,47 @@
+<!-- sample from https://github.com/oliezekat/mYLastRSS/releases.atom -->
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
+  <id>tag:github.com,2008:https://github.com/oliezekat/mYLastRSS/releases</id>
+  <link type="text/html" rel="alternate" href="https://github.com/oliezekat/mYLastRSS/releases"/>
+  <link type="application/atom+xml" rel="self" href="https://github.com/oliezekat/mYLastRSS/releases.atom"/>
+  <title>Release notes from mYLastRSS</title>
+  <updated>2026-07-13T19:00:10+02:00</updated>
+  <entry>
+    <id>tag:github.com,2008:Repository/1299517975/r20260713</id>
+    <updated>2026-07-14T16:12:31+02:00</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/oliezekat/mYLastRSS/releases/tag/r20260713"/>
+    <title>Release  20260713</title>
+    <content type="html">&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Fixes for PHP 8.1&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;Add mYLR_Transport_WpRequests class to use WpOrg\Requests class.&lt;/li&gt;
+&lt;li&gt;Add &#39;emoji-strip.php&#39; from Symfony in Misc folder.&lt;/li&gt;
+&lt;li&gt;Use &#39;MYLASTRSS_EMOJIS_PATH&#39; global constant to replace emojis.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Fix classes constructors for PHP 7&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;Fix unhtmlentities() for PHP 5.5.&lt;/li&gt;
+&lt;li&gt;Fix _InitEntitiesArray() if default_charset is UTF-8 (since PHP 5.4).&lt;/li&gt;
+&lt;li&gt;Add static funtion mYLR_TrimXmlTags() to remove useless spaces (but keep CDATA as is).&lt;/li&gt;
+&lt;li&gt;Add static funtion mYLR_StripHTMLscript() to remove &quot;script&quot; tags (but not used yet).&lt;/li&gt;
+&lt;li&gt;Add Requests component in Misc folder.&lt;/li&gt;
+&lt;li&gt;&#39;useSnoopy&#39; property deprecated.&lt;/li&gt;
+&lt;li&gt;Add &#39;transport&#39; property to choose HTTP client (let blank, or set fopen, Requests, Snoopy).&lt;/li&gt;
+&lt;li&gt;Add mYLR_Transport_Requests class to use Requests class.&lt;/li&gt;
+&lt;li&gt;Add mYLR_Transport_Snoopy class to use Snoopy class.&lt;/li&gt;
+&lt;li&gt;Add mYLR_Transport_FOpen class as built-in HTTP client.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Add mYLR_Client class to manage how to get content with mYLR_Transport_xx classes&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;Fix how to estimate time-out per feed.&lt;/li&gt;
+&lt;li&gt;No longer retry with fopen if Snoopy failed.&lt;/li&gt;
+&lt;li&gt;Fix Atom&#39;s specification into &#39;namespaces.inc.php&#39; file.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Add YouTube XMLNS support&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Use detected XMLNS extensions for Atom feed&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;Add static funtion mYLR_StripItokFragment() to remove Drupal token for images (but not used yet).&lt;/li&gt;
+&lt;li&gt;Add &#39;dc:publisher&#39; support.&lt;/li&gt;
+&lt;li&gt;Add static funtion mYLR_StripTwitterFragment() to remove Twitter tracking code (but not used yet).&lt;/li&gt;
+&lt;li&gt;Add static funtion mYLR_StripSocSrcFragment() to remove tracking code (but not used yet).&lt;/li&gt;
+&lt;li&gt;Add static funtion mYLR_StripGAFragment() to remove Google Universal Analytics cookie (but not used yet).&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>oliezekat</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/7097130?s=60&amp;v=4"/>
+  </entry>
+</feed>

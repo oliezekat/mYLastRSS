@@ -1,0 +1,112 @@
+<!-- sample from https://sourceforge.net/projects/mylastrss/rss?path=/sources -->
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:files="https://sourceforge.net/api/files.rdf#" xmlns:media="http://video.search.yahoo.com/mrss/" xmlns:doap="http://usefulinc.com/ns/doap#" xmlns:sf="https://sourceforge.net/api/sfelements.rdf#" version="2.0">
+  <channel xmlns:files="https://sourceforge.net/api/files.rdf#" xmlns:media="http://video.search.yahoo.com/mrss/" xmlns:doap="http://usefulinc.com/ns/doap#" xmlns:sf="https://sourceforge.net/api/sfelements.rdf#">
+    <title>mYLastRSS</title>
+    <link>https://sourceforge.net</link>
+    <description><![CDATA[Files from mYLastRSS PHP class to parse several feeds at same time and give ordered result. Support RSS 0.9x/1.0/2.0, RDF, and Atom. Support some namespaced modules like Media RSS, iTunes, Dublin Core, and more... Include class to make RSS rewriting or filtering.]]></description>
+    <pubDate>Sun, 26 Jul 2026 06:20:11 UT</pubDate>
+    <managingEditor>noreply@sourceforge.net (SourceForge.net)</managingEditor>
+    <docs>http://blogs.law.harvard.edu/tech/rss</docs>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20141031-build/readme.txt]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20141031-build/readme.txt/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20141031-build/readme.txt/download</guid>
+      <pubDate>Fri, 31 Oct 2014 20:24:24 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20141031-build/readme.txt]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">18759741</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">text</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="text/plain; charset=us-ascii" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20141031-build/readme.txt/download" filesize="757"><media:hash algo="md5">6c86226795da60f3f64ad5d397cb795f</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20141031-build/mylastrss-r20141031.rar]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20141031-build/mylastrss-r20141031.rar/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20141031-build/mylastrss-r20141031.rar/download</guid>
+      <pubDate>Fri, 31 Oct 2014 20:21:26 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20141031-build/mylastrss-r20141031.rar]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">18759739</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">RAR archive data</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/x-rar; charset=binary" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20141031-build/mylastrss-r20141031.rar/download" filesize="197848"><media:hash algo="md5">a0e651d486f807304121de7022cb4784</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20120312-build/readme.txt]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20120312-build/readme.txt/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20120312-build/readme.txt/download</guid>
+      <pubDate>Mon, 12 Mar 2012 11:58:01 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20120312-build/readme.txt]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">5890896</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">text</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="text/plain; charset=us-ascii" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20120312-build/readme.txt/download" filesize="818"><media:hash algo="md5">aa8d05049c49c79974c95dbd7ed38bcd</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20120312-build/mylastrss-r20120312.zip]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20120312-build/mylastrss-r20120312.zip/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20120312-build/mylastrss-r20120312.zip/download</guid>
+      <pubDate>Mon, 12 Mar 2012 11:48:53 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20120312-build/mylastrss-r20120312.zip]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">5890838</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">empty (Zip archive data)</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/zip; charset=binary" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20120312-build/mylastrss-r20120312.zip/download" filesize="186361"><media:hash algo="md5">d0deef23a87d7fac7655a7300c69123a</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20090704-build/mylastrss-r20090704.zip]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20090704-build/mylastrss-r20090704.zip/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20090704-build/mylastrss-r20090704.zip/download</guid>
+      <pubDate>Sat, 04 Jul 2009 11:19:12 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20090704-build/mylastrss-r20090704.zip]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">1665164</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">Zip archive data</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/x-zip" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20090704-build/mylastrss-r20090704.zip/download" filesize="184788"><media:hash algo="md5">01a11c59bf443159caeb8e8a010077f3</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20080206-build/mylastrss-r20080206.zip]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20080206-build/mylastrss-r20080206.zip/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20080206-build/mylastrss-r20080206.zip/download</guid>
+      <pubDate>Wed, 06 Feb 2008 11:26:40 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20080206-build/mylastrss-r20080206.zip]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">1347674</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">Zip archive data</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/x-zip" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20080206-build/mylastrss-r20080206.zip/download" filesize="155494"><media:hash algo="md5">bbd2700f89a7f27162784d0c1f6eae74</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20070419-build/mylastrss-r20070419.zip]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20070419-build/mylastrss-r20070419.zip/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20070419-build/mylastrss-r20070419.zip/download</guid>
+      <pubDate>Thu, 19 Apr 2007 10:15:40 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20070419-build/mylastrss-r20070419.zip]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">1164638</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">Zip archive data</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/x-zip" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20070419-build/mylastrss-r20070419.zip/download" filesize="150492"><media:hash algo="md5">c477c3c0b2cdcec0ada48281574786d1</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20070301-build/mylastrss-r20070301.zip]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20070301-build/mylastrss-r20070301.zip/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20070301-build/mylastrss-r20070301.zip/download</guid>
+      <pubDate>Sat, 14 Apr 2007 14:32:35 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20070301-build/mylastrss-r20070301.zip]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">1161740</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">Zip archive data</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/x-zip" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20070301-build/mylastrss-r20070301.zip/download" filesize="122228"><media:hash algo="md5">4d708f06c7c1ac2067fc9962f45a2618</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20061210-build/mylastrss-r20061210.zip]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20061210-build/mylastrss-r20061210.zip/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20061210-build/mylastrss-r20061210.zip/download</guid>
+      <pubDate>Sun, 10 Dec 2006 17:43:21 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20061210-build/mylastrss-r20061210.zip]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">1083443</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">Zip archive data</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/x-zip" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20061210-build/mylastrss-r20061210.zip/download" filesize="122659"><media:hash algo="md5">b5bc39f33496f6b8f9950c29538b7c3f</media:hash></media:content>
+    </item>
+    <item>
+      <title><![CDATA[/sources/mylastrss-20061104-build/mylastrss-r20061104.zip]]></title>
+      <link>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20061104-build/mylastrss-r20061104.zip/download</link>
+      <guid>https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20061104-build/mylastrss-r20061104.zip/download</guid>
+      <pubDate>Sat, 04 Nov 2006 16:22:55 UT</pubDate>
+      <description><![CDATA[/sources/mylastrss-20061104-build/mylastrss-r20061104.zip]]></description>
+      <files:sf-file-id xmlns:files="https://sourceforge.net/api/files.rdf#">1061942</files:sf-file-id>
+      <files:extra-info xmlns:files="https://sourceforge.net/api/files.rdf#">Zip archive data</files:extra-info>
+      <media:content xmlns:media="http://video.search.yahoo.com/mrss/" type="application/x-zip" url="https://sourceforge.net/projects/mylastrss/files/sources/mylastrss-20061104-build/mylastrss-r20061104.zip/download" filesize="121787"><media:hash algo="md5">e0eed6b67b10e3471244f594f21492aa</media:hash></media:content>
+    </item>
+  </channel>
+</rss>
