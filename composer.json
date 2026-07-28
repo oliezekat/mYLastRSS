@@ -45,5 +45,8 @@
                 "GHSA-vvj3-c3rp-c85p": "Still need use PHPUnit 5.7 to run tests under PHP 5.6"
             }
         }
-    }    
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    }
 }
