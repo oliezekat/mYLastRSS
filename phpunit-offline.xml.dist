@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/5.7/phpunit.xsd"
+    bootstrap="vendor/autoload.php"
+    colors="true"
+    verbose="true"
+>
+    <testsuites>
+        <testsuite name="mYLastRSS Test (offline) Suite">
+            <file>tests/LegacyMyLastRssTest.php</file>
+        </testsuite>
+    </testsuites>
+
+    <logging>
+        <log type="junit" target="var/outputs/phpunit-offline/logfile.xml"/>
+        <log type="testdox-text" target="var/outputs/phpunit-offline/testdox.txt"/>
+    </logging>
+</phpunit>

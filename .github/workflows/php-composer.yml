@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        php: ['5.6', '7.4', '8.1']
+        php: ['7.4', '8.1']
 
     steps:
     - uses: actions/checkout@v5
@@ -45,5 +45,5 @@ jobs:
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
-    - name: Run PHPUnit test suite
-      run: composer run-script test
+    - name: Run PHPUnit test (offline) suite
+      run: composer run-script test-offline

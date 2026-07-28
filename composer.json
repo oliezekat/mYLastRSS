@@ -47,6 +47,7 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit"
+        "test": "vendor/bin/phpunit",
+        "test-offline": "vendor/bin/phpunit -c phpunit-offline.xml.dist"
     }
 }
