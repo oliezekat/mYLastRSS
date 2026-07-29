@@ -70,7 +70,7 @@ $MYLR_XMLNS['image']['item_tags']                        = array('image:loc','im
 /* http://www.google.com/schemas/sitemap-video/1.1 */
 
 $MYLR_XMLNS['video']['channel_tags']                     = array();
-$MYLR_XMLNS['video']['item_tags']                        = array('video:thumbnail_loc','video:publication_date','video:title','video:description','video:tag','video:duration','video:player_loc');
+$MYLR_XMLNS['video']['item_tags']                        = array('video:thumbnail_loc','video:publication_date','video:title','video:description','video:tag','video:duration','video:player_loc','video:live','video:requires_subscription','video:family_friendly');
 
 /* http://www.artionet.ch/Editor/Images */
 
@@ -181,7 +181,7 @@ $MYLR_XMLNS['media']['item_tags']                        = array('media:title','
 // Todo: support several 'media:group'
 $MYLR_XMLNS['media']['item_media:group_tags']            = array('media:content','media:credit','media:category','media:rating');
 $MYLR_XMLNS['media']['item_media:content_attributes']    = array('url','type','height','width','duration','fileSize','expression','bitrate','channels');
-$MYLR_XMLNS['media']['item_media:content_tags']          = array('media:title','media:keywords','media:credit','media:category','media:rating');
+$MYLR_XMLNS['media']['item_media:content_tags']          = array('media:title','media:keywords','media:credit','media:category','media:rating','media:hash');
 $MYLR_XMLNS['media']['item_media:thumbnail_attributes']  = array('url','type','height','width','time');
 $MYLR_XMLNS['media']['item_media:player_attributes']     = array('url','height','width');
 $MYLR_XMLNS['media']['item_media:credit_attributes']     = array('role');
@@ -250,5 +250,10 @@ $MYLR_XMLNS['yt']['channel_tags']                        = array('yt:channelId')
 $MYLR_XMLNS['yt']['item_tags']                           = array('yt:channelId','yt:videoId','yt:username','yt:statistics','yt:duration');
 $MYLR_XMLNS['yt']['item_yt:statistics_attributes']       = array('viewCount','favoriteCount');
 $MYLR_XMLNS['yt']['item_yt:duration_attributes']         = array('seconds');
+
+/* https://sourceforge.net/api/files.rdf */
+
+$MYLR_XMLNS['files']['channel_tags']                       = array();
+$MYLR_XMLNS['files']['item_tags']                          = array('files:sf-file-id','files:extra-info');
 
 ?>
