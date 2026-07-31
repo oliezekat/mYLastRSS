@@ -12,6 +12,12 @@ or download sources
 include_once('mylastrss/mylastrss.class.php');
 ```
 
+### Suggests
+
+ * Setup PHP with allow_url_fopen to enable fopen transport to fetch URLs of feeds
+ * Setup PHP with Open SSL extension (with root certificates bundle) to allow fopen transport to fetch URLs of feeds over HTTPS protocole
+ * Include or install with Composer "rmccue/requests" which was use as default transport to fetch URLs of feeds
+
 ## Usage
 
 ```php
