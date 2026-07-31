@@ -822,28 +822,31 @@ class mYLastRSS
 		// If CACHE ENABLED
 		if ($this->cache_feed_dir != '')
 			{
+            $cacheFileExists = false;
 			if (isset($this->_SOURCES[$source_kidx]['cachedFileName']))
 				{
 				$cacheFilename = $this->_SOURCES[$source_kidx]['cachedFileName'];
-				$cache_file = $this->cache_feed_dir.'/'.$cacheFilename;
-				$cacheFileExists = TRUE;
-				$cacheFileTime = $this->_SOURCES[$source_kidx]['updatedTime'];
-				}
-			else
-				{
-				$cacheFilename = $this->_SourceCacheFileName($source_kidx,$this->items_limit,$this->stripHTML,$this->date_format,$this->CDATA,$this->cp,$this->kidx_rule);
-				$cache_file = $this->cache_feed_dir.'/'.$cacheFilename;
+				$cache_file = $this->cache_feed_dir . DIRECTORY_SEPARATOR . $cacheFilename;
                 clearstatcache(true, $cache_file);
 				$cacheFileExists = file_exists($cache_file);
 				$cacheFileTime = 0;
-				if ($cacheFileExists == TRUE) $cacheFileTime = filemtime($cache_file);
+				if ($cacheFileExists === true) $cacheFileTime = $this->_SOURCES[$source_kidx]['updatedTime'];
+				}
+			if ($cacheFileExists === false)
+				{
+				$cacheFilename = $this->_SourceCacheFileName($source_kidx,$this->items_limit,$this->stripHTML,$this->date_format,$this->CDATA,$this->cp,$this->kidx_rule);
+				$cache_file = $this->cache_feed_dir . DIRECTORY_SEPARATOR . $cacheFilename;
+                clearstatcache(true, $cache_file);
+				$cacheFileExists = file_exists($cache_file);
+				$cacheFileTime = 0;
+				if ($cacheFileExists === true) $cacheFileTime = filemtime($cache_file);
 				}
 			
 			if (isset($this->_SOURCES[$source_kidx]['errorFileName']))
 				{
 				$errorFilename = $this->_SOURCES[$source_kidx]['errorFileName'];
 				$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
-				$errorFileExists = TRUE;
+				$errorFileExists = true;
 				$errorFileTime = $this->_SOURCES[$source_kidx]['errorTime'];
 				}
 			else if ($this->retry_delay > 0)
@@ -853,7 +856,7 @@ class mYLastRSS
                 clearstatcache(true, $error_content_file);
 				$errorFileExists = file_exists($error_content_file);
 				$errorFileTime = 0;
-				if ($errorFileExists == TRUE) $errorFileTime = filemtime($error_content_file);
+				if ($errorFileExists === true) $errorFileTime = filemtime($error_content_file);
 				}
 
 			if (($this->retry_delay > 0) AND ($errorFileExists == TRUE) AND ((time() - $errorFileTime) <= $this->retry_delay))
@@ -866,7 +869,7 @@ class mYLastRSS
 				}
 			else $timedif = $this->cache_time;
 				
-			if (($timedif < $this->cache_time) OR (($this->query_limit > 0) AND ($this->query_limit <= $this->_QUERY_COUNT)))
+			if (($cacheFileExists === true) && (($timedif < $this->cache_time) OR (($this->query_limit > 0) AND ($this->query_limit <= $this->_QUERY_COUNT))))
 				{
 				// cached file is fresh enough, return cached array
 				$result = $this->_LoadCacheFile($cache_file);
@@ -877,7 +880,7 @@ class mYLastRSS
 					}
 				else
 					{
-					$this->_LAST_ERROR_MESSAGES[] = "Fail load '$rss_url' cached file.";
+					$this->_LAST_ERROR_MESSAGES[] = "[GetFromOneSource] Fail load '$rss_url' cached file.";
 					}
 				}
 			else
@@ -899,7 +902,7 @@ class mYLastRSS
 								}
 							else
 								{
-								$this->_LAST_ERROR_MESSAGES[] = "Fail load '$rss_url' cached file.";
+								$this->_LAST_ERROR_MESSAGES[] = "[GetFromOneSource] Fail load '$rss_url' cached file.";
 								}
 							}
 						// Don't use cache
@@ -943,7 +946,7 @@ class mYLastRSS
 						}
 					else
 						{
-						$this->_LAST_ERROR_MESSAGES[] = "Fail load '$rss_url' cached file.";
+						$this->_LAST_ERROR_MESSAGES[] = "[GetFromOneSource] Fail load '$rss_url' cached file.";
 						}
 					}
 				}
@@ -1058,6 +1061,7 @@ class mYLastRSS
 					$result=str_replace('≈ë','o',$result); // o double accent aigu
 					$result=str_replace('ƒõ','e',$result); // e antiflexe
 					$result=str_replace('ƒº','l',$result); // L virgule souscrite
+					$result=str_replace('nÃÉ','n',$result); // n tilde
 					$result=str_replace('IÃÇ','&Icirc;',$result); 
 					$result=str_replace('EÃÅ','&Eacute;',$result); // …
                     $result=str_replace('eÃÇ','&ecirc;',$result); // Í
@@ -1094,6 +1098,7 @@ class mYLastRSS
 				
 				if (in_array(strtolower($this->cp),array('iso-8859-1','windows-1252')))
 					{
+                    $result = str_replace('†',' ',$result); // Espace etrange, insecable en ANSI ?
 					$result=str_replace(array('¥','í'),"'",$result);
 					$result=str_replace(array('Àù'),'"',$result);
 					}
@@ -4177,19 +4182,19 @@ function mYLR_StripLastUL($content)
 // http://fr.php.net/manual/fr/function.chr.php#77911
 function mYLR_unichr($c)
 	{
-    if ($c <= 0x7F) {
-        return chr($c);
-    } else if ($c <= 0x7FF) {
-        return chr(0xC0 | $c >> 6) . chr(0x80 | $c & 0x3F);
-    } else if ($c <= 0xFFFF) {
-        return chr(0xE0 | $c >> 12) . chr(0x80 | $c >> 6 & 0x3F)
-                                    . chr(0x80 | $c & 0x3F);
-    } else if ($c <= 0x10FFFF) {
-        return chr(0xF0 | $c >> 18) . chr(0x80 | $c >> 12 & 0x3F)
-                                    . chr(0x80 | $c >> 6 & 0x3F)
-                                    . chr(0x80 | $c & 0x3F);
-    } else {
-        return false;
-    }
+        if ($c <= 0x7F) {
+            return chr($c);
+        } else if ($c <= 0x7FF) {
+            return chr(0xC0 | $c >> 6) . chr(0x80 | $c & 0x3F);
+        } else if ($c <= 0xFFFF) {
+            return chr(0xE0 | $c >> 12) . chr(0x80 | $c >> 6 & 0x3F)
+                                        . chr(0x80 | $c & 0x3F);
+        } else if ($c <= 0x10FFFF) {
+            return chr(0xF0 | $c >> 18) . chr(0x80 | $c >> 12 & 0x3F)
+                                        . chr(0x80 | $c >> 6 & 0x3F)
+                                        . chr(0x80 | $c & 0x3F);
+        } else {
+            return false;
+        }
 	}
-?>
+
