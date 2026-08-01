@@ -1,4 +1,4 @@
-name: PHP Composer
+name: PHP 7.4, and 8.1 with PHPUnit tests (offline)
 
 on:
   push:
@@ -9,9 +9,6 @@ on:
     branches:
     - main
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -34,7 +31,7 @@ jobs:
         php-version: ${{ matrix.php }}
         tools: composer
 
-    - name: Validate composer.json and composer.lock
+    - name: Validate composer.json
       run: composer validate --strict
 
     - name: Cache Composer packages
@@ -52,5 +49,5 @@ jobs:
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
 
-    - name: Run PHPUnit test (offline) suite
+    - name: Run PHPUnit tests (offline) suite
       run: composer run-script test-offline

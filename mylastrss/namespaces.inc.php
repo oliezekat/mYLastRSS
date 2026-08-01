@@ -256,4 +256,3 @@ $MYLR_XMLNS['yt']['item_yt:duration_attributes']         = array('seconds');
 $MYLR_XMLNS['files']['channel_tags']                       = array();
 $MYLR_XMLNS['files']['item_tags']                          = array('files:sf-file-id','files:extra-info');
 
-?>

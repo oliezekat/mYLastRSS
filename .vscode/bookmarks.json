@@ -1,0 +1,29 @@
+{
+	"files": [
+		{
+			"path": "mylastrss/mylastrss.class.php",
+			"bookmarks": [
+				{
+					"line": 184,
+					"column": 0,
+					"label": "todo if php 5 or with cp"
+				},
+				{
+					"line": 238,
+					"column": 0,
+					"label": "todo polyfill utf8_encode"
+				},
+				{
+					"line": 1009,
+					"column": 0,
+					"label": "todo polyfill utf8_encode"
+				},
+				{
+					"line": 3624,
+					"column": 0,
+					"label": "todo with encoding"
+				}
+			]
+		}
+	]
+}
