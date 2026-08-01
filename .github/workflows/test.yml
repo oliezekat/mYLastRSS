@@ -1,4 +1,5 @@
-name: PHP 7.4, and 8.1 with PHPUnit tests (offline)
+name: Test
+description: PHP 7.4 and 8.1, Composer, PHPUnit tests (offline)
 
 on:
   push:
