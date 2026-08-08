@@ -2,17 +2,25 @@
 
 namespace Oliezekat\MyLastRss\Tests;
 
-final class LegacyMylr2RssTest extends AbstractClassTestCase
+abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
 {
     use TempDirectoryTrait;
-    use SourcesProvidersTrait;
 
-    protected function getClassName()
+    /* TempDirectoryTrait */
+
+    public function __destruct()
+    {
+        self::deleteTempDirectory();
+    }
+
+    /* AbstractClassTestCase */
+
+    final protected function getClassName()
     {
         return '\mYLR2RSS';
     }
 
-    protected function getClassMethods()
+    final protected function getClassMethods()
     {
         return ['Get', 'GetCache', 'Output'];
     }
@@ -22,25 +30,25 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
         parent::testClassInterface();
     }
 
-    /**
-     * @depends testClassInterface
-     */
-    public function testTempDirectoryDefined()
-    {
-        $this->assertTempDirectoryDefined();
-    }
+    /* AbstractMylr2RssTestCase */
 
     private function getTestCachePath()
     {
+        self::createTempDirectory();
         return $this->getTempDirectoryPath() . DIRECTORY_SEPARATOR . 'cache';
+    }
+
+    private function getTestOutputFilePath()
+    {
+        $outputDirPath = implode(DIRECTORY_SEPARATOR, ['var','outputs','phpunit']);
+        @mkdir($outputDirPath, 0777, true);
+        return implode(DIRECTORY_SEPARATOR, [$outputDirPath, str_replace('\\', '-', static::class) . '-Output.xml']);
     }
 
     /**
      * @testdox Get array of sources with cache
-     * @requires extension openssl
      * @depends testClassInterface
-     * @depends testTempDirectoryDefined
-     * @dataProvider urlsSourcesProvider
+     * @dataProvider sourcesProvider
      */
     public function testGet($sources, $minItems)
     {
@@ -57,7 +65,7 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
     /**
      * @testdox Get sources from cache
      * @depends testGet
-     * @dataProvider urlsSourcesProvider
+     * @dataProvider sourcesProvider
      */
     public function testGetCache($sources, $minItems)
     {
@@ -71,24 +79,17 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
         $this->assertGreaterThanOrEqual($minItems, count($result['items']), "Minimum number of items expected");
     }
 
-    private function getTestOutputFilePath()
-    {
-        $outputDirPath = implode(DIRECTORY_SEPARATOR, ['var','outputs','phpunit']);
-        @mkdir($outputDirPath, 0777, true);
-        return implode(DIRECTORY_SEPARATOR, [$outputDirPath,'mYLR2RSS-Output-Test.xml']);
-    }
-
     /**
      * @testdox Output RSS 2.0 feed
      * @depends testGetCache
-     * @dataProvider urlsSourcesProvider
+     * @dataProvider sourcesProvider
      */
     public function testOutput($sources, $minItems)
     {
         $className = $this->getClassName();
         $rss = new $className();
         $rss->cache_dir = $this->getTestCachePath();
-        $rss->feed_title = 'mYLastRSS - PHPUnit - LegacyMylr2RssTest - Output';
+        $rss->feed_title = static::class . ' - Output';
         $rss->feed_link = 'https://github.com/oliezekat/mYLastRSS';
         $output = $rss->Output($sources, true);
         $this->assertTrue($output !== null, 'Output not null');
@@ -105,7 +106,7 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
     /**
      * @testdox Get output feed saved 
      * @depends testOutput
-     * @dataProvider urlsSourcesProvider
+     * @dataProvider sourcesProvider
      */
     public function testGetOutputSaved($sources, $minItems)
     {
@@ -118,13 +119,5 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
         $this->assertArrayHasKey('items', $result, 'Result has "items" key');
         $this->assertTrue(is_array($result['items']), 'Result has array of items');
         $this->assertGreaterThanOrEqual($minItems, count($result['items']), "Minimum number of items expected");
-    }
-
-    /**
-     * @depends testTempDirectoryDefined
-     */
-    public function testTempDirectoryDeleted()
-    {
-        $this->assertTempDirectoryDeleted();
     }
 }
