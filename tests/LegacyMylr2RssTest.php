@@ -73,7 +73,9 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
 
     private function getTestOutputFilePath()
     {
-        return implode(DIRECTORY_SEPARATOR, ['var','outputs','phpunit','mYLR2RSS-Output-Test.xml']);
+        $outputDirPath = implode(DIRECTORY_SEPARATOR, ['var','outputs','phpunit']);
+        @mkdir($outputDirPath, 0777, true);
+        return implode(DIRECTORY_SEPARATOR, [$outputDirPath,'mYLR2RSS-Output-Test.xml']);
     }
 
     /**
@@ -88,11 +90,8 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
         $rss->cache_dir = $this->getTestCachePath();
         $rss->feed_title = 'mYLastRSS - PHPUnit - LegacyMylr2RssTest - Output';
         $rss->feed_link = 'https://github.com/oliezekat/mYLastRSS';
-        ob_start();
-        $result = $rss->Output($sources);
-        $output = $this->getActualOutput();
-        ob_end_clean();
-        $this->assertTrue($result, 'Result is success');
+        $output = $rss->Output($sources, true);
+        $this->assertTrue($output !== null, 'Output not null');
         $this->assertTrue(trim($output) !== '', 'Output not empty');
         $outputFilePath = $this->getTestOutputFilePath();
         $saved = file_put_contents(
