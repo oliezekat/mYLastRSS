@@ -5,7 +5,7 @@ namespace Oliezekat\MyLastRss\Tests;
 trait TempDirectoryTrait
 {
     // Array of temporary directories for each class
-    private static $testTempDirectories = []; 
+    private static $testTempDirectories = [];
 
     private static function createTempDirectory($className = null)
     {

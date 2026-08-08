@@ -104,7 +104,7 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
     }
 
     /**
-     * @testdox Get output feed saved 
+     * @testdox Get output feed saved
      * @depends testOutput
      * @dataProvider sourcesProvider
      */

@@ -10,5 +10,4 @@ final class LegacyMylr2RssOfflineTest extends AbstractMylr2RssTestCase
     {
         return self::samplesSourcesProvider();
     }
-
 }
