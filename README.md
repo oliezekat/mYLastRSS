@@ -7,10 +7,6 @@ Simple yet powerfull PHP class to parse and merge several RSS, RDF, Atom feeds
 ```bash
 composer require oliezekat/mylastrss
 ```
-or download sources
-```php
-include_once('mylastrss/mylastrss.class.php');
-```
 
 ### Suggests
 
