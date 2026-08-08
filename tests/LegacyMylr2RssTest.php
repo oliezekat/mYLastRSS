@@ -126,7 +126,6 @@ final class LegacyMylr2RssTest extends AbstractClassTestCase
      */
     public function testTempDirectoryDeleted()
     {
-        self::deleteTempDirectory();
-        $this->assertTrue($this->getTempDirectoryPath() === null, 'Path is null');
+        $this->assertTempDirectoryDeleted();
     }
 }

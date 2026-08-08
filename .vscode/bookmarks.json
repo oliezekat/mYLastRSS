@@ -24,6 +24,26 @@
 					"label": "todo with encoding"
 				}
 			]
+		},
+		{
+			"path": "tests/LegacyMylr2RssTest.php",
+			"bookmarks": [
+				{
+					"line": 92,
+					"column": 0,
+					"label": "bug getActualOutput phpunit10"
+				}
+			]
+		},
+		{
+			"path": "mylastrss/misc/mylr2rss/mylr2rss.class.php",
+			"bookmarks": [
+				{
+					"line": 62,
+					"column": 0,
+					"label": "todo arg to return output to fix phpunit10 issue"
+				}
+			]
 		}
 	]
 }
