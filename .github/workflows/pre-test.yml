@@ -1,14 +1,7 @@
-name: Test
+name: Pre-Test
 description: PHP, Composer, PHPUnit
 
 on:
-  push:
-    branches:
-    - main
-    - release/*
-  pull_request:
-    branches:
-    - main
   workflow_dispatch:
 
 permissions:
@@ -21,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        php: ['7.4', '8.1']
+        php: ['5.6', '8.2']
 
     steps:
     - uses: actions/checkout@v5

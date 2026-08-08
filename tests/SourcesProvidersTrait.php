@@ -4,7 +4,7 @@ namespace Oliezekat\MyLastRss\Tests;
 
 trait SourcesProvidersTrait
 {
-    public function sampleSourceProvider()
+    public static function sampleSourceProvider()
     {
         return [
             'RSS 2.0' => [
@@ -26,9 +26,9 @@ trait SourcesProvidersTrait
         ];
     }
 
-    public function samplesSourcesProvider()
+    public static function samplesSourcesProvider()
     {
-        $samples = $this->sampleSourceProvider();
+        $samples = self::sampleSourceProvider();
         $nbSamples = count($samples);
         $nbItems = 0;
         $sources = [];
@@ -45,7 +45,7 @@ trait SourcesProvidersTrait
         return $data;
     }
 
-    public function urlSourceProvider()
+    public static function urlSourceProvider()
     {
         return [
             'github.com/releases' => [
@@ -67,9 +67,9 @@ trait SourcesProvidersTrait
         ];
     }
 
-    public function urlsSourcesProvider()
+    public static function urlsSourcesProvider()
     {
-        $urls = $this->urlSourceProvider();
+        $urls = self::urlSourceProvider();
         $nbUrls = count($urls);
         $nbItems = 0;
         $sources = [];

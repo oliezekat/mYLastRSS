@@ -15,8 +15,8 @@
         "php": ">=5.6"
     },
     "require-dev": {
-        "squizlabs/php_codesniffer": "^3.13 || ^4.0",
-        "phpunit/phpunit": "^5.7 || ^9.6"
+		"phpunit/phpunit": "^5.7 || ^9.6 || ^10.5 || ^11.5",
+        "squizlabs/php_codesniffer": "^3.13 || ^4.0"
     },
     "suggest": {
         "ext-openssl": "Enables access to feeds over HTTPS",

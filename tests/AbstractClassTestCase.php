@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 
 abstract class AbstractClassTestCase extends TestCase
 {
-
     abstract protected function getClassName();
 
     abstract protected function getClassMethods();

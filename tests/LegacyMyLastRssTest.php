@@ -20,7 +20,7 @@ final class LegacyMyLastRssTest extends AbstractClassTestCase
     {
         parent::testClassInterface();
     }
-    
+
     /**
      * @depends testClassInterface
      * @dataProvider sampleSourceProvider
@@ -35,7 +35,7 @@ final class LegacyMyLastRssTest extends AbstractClassTestCase
         $this->assertTrue(is_array($result['items']), 'Result has array of items');
         $this->assertEquals($nbItems, count($result['items']), "Number of items expected");
     }
-    
+
     /**
      * @testdox Get array of sources
      * @depends testClassInterface
