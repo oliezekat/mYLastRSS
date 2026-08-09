@@ -15,7 +15,7 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
 
     public static function tear_down_after_class()
     {
-        self::deleteTempDirectory();
+        // self::deleteTempDirectory();
     }
 
     /* AbstractClassTestCase */
@@ -47,6 +47,16 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
         return implode(DIRECTORY_SEPARATOR, [$this->getTempDirectoryPath(), str_replace('\\', '-', static::class) . '-Output.xml']);
     }
 
+    protected function createClassInstance()
+    {
+        $className = $this->getClassName();
+        $instance                = new $className();
+        $instance->cache_dir     = $this->getTestCachePath();
+        $instance->feed_title    = static::class . ' - Output';
+        $instance->feed_link     = 'https://github.com/oliezekat/mYLastRSS';
+        return $instance;
+    }
+
     /**
      * @testdox Get array of sources with cache
      * @depends testClassInterface
@@ -54,10 +64,8 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
      */
     public function testGet($sources, $minItems)
     {
-        $className = $this->getClassName();
-        $rss = new $className();
-        $rss->cache_dir = $this->getTestCachePath();
-        $result = $rss->Get($sources);
+        $instance = $this->createClassInstance();
+        $result = $instance->Get($sources);
         $this->assertTrue(is_array($result), 'Result is array');
         $this->assertArrayHasKey('items', $result, 'Result has "items" key');
         $this->assertTrue(is_array($result['items']), 'Result has array of items');
@@ -71,10 +79,8 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
      */
     public function testGetCache($sources, $minItems)
     {
-        $className = $this->getClassName();
-        $rss = new $className();
-        $rss->cache_dir = $this->getTestCachePath();
-        $result = $rss->GetCache($sources);
+        $instance = $this->createClassInstance();
+        $result = $instance->GetCache($sources);
         $this->assertTrue(is_array($result), 'Result is array');
         $this->assertArrayHasKey('items', $result, 'Result has "items" key');
         $this->assertTrue(is_array($result['items']), 'Result has array of items');
@@ -88,12 +94,8 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
      */
     public function testOutput($sources, $minItems)
     {
-        $className = $this->getClassName();
-        $rss = new $className();
-        $rss->cache_dir = $this->getTestCachePath();
-        $rss->feed_title = static::class . ' - Output';
-        $rss->feed_link = 'https://github.com/oliezekat/mYLastRSS';
-        $output = $rss->Output($sources, true);
+        $instance = $this->createClassInstance();
+        $output = $instance->Output($sources, true);
         $this->assertTrue($output !== null, 'Output not null');
         $this->assertTrue(trim($output) !== '', 'Output not empty');
         $outputFilePath = $this->getTestOutputFilePath();
@@ -114,9 +116,8 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
     {
         $outputFilePath = $this->getTestOutputFilePath();
         $this->assertFileIsReadable($outputFilePath, 'Output saved file readable');
-        $className = $this->getClassName();
-        $rss = new $className();
-        $result = $rss->Get($outputFilePath);
+        $instance = $this->createClassInstance();
+        $result = $instance->Get($outputFilePath);
         $this->assertTrue(is_array($result), 'Result is array');
         $this->assertArrayHasKey('items', $result, 'Result has "items" key');
         $this->assertTrue(is_array($result['items']), 'Result has array of items');
