@@ -7,12 +7,19 @@
 >
     <testsuites>
         <testsuite name="mYLastRSS Test (offline) Suite">
-            <file>tests/LegacyMyLastRssTest.php</file>
+            <directory suffix="Test.php">tests</directory>
+            <exclude>tests/LegacyMylr2RssOnlineTest.php</exclude>
         </testsuite>
     </testsuites>
 
     <logging>
-        <junit outputFile="var/outputs/phpunit-offline/logfile.xml"/>
-        <testdoxText outputFile="var/outputs/phpunit-offline/testdox.txt"/>
+        <junit outputFile="var/outputs/phpunit/logfile.xml"/>
+        <testdoxText outputFile="var/outputs/phpunit/testdox.txt"/>
+        <!-- 
+        PHPUnit 5.7 don't support junit and testdoxText nodes 
+        https://phpunit.de/manual/5.7/en/
+        <log type="junit" target="var/outputs/phpunit/logfile.xml"/>
+        <log type="testdox-text" target="var/outputs/phpunit/testdox.txt"/>
+        -->
     </logging>
 </phpunit>
