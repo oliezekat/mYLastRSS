@@ -5,6 +5,13 @@
     bootstrap="vendor/autoload.php"
     colors="true"
 >
+    <!-- Enable online tests with URLs -->
+    <php>
+        <ini name="allow_url_fopen" value="On"/>
+        <ini name="max_execution_time" value="120"/>
+        <ini name="default_socket_timeout" value="30"/>
+    </php>
+
     <testsuites>
         <testsuite name="mYLastRSS Test Suite">
             <directory suffix="Test.php">tests</directory>

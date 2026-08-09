@@ -67,7 +67,7 @@ trait SourcesProvidersTrait
         ];
     }
 
-    public static function urlsSourcesProvider($minItemsPerSource = null)
+    public static function urlsSourcesProvider()
     {
         $urls = self::urlSourceProvider();
         $nbUrls = count($urls);
@@ -75,7 +75,7 @@ trait SourcesProvidersTrait
         $sources = [];
         foreach ($urls as $url) {
             $sources[] = $url[0];
-            $nbItems += ($minItemsPerSource === null ? $url[1] : intval($minItemsPerSource, 10));
+            $nbItems += $url[1];
         }
         $data = [
             $nbUrls . ' URLs' => [
