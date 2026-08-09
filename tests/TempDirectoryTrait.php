@@ -4,47 +4,46 @@ namespace Oliezekat\MyLastRss\Tests;
 
 trait TempDirectoryTrait
 {
-    private static $testTempDirectoryPath = null;
+    // Array of temporary directories for each class
+    private static $testTempDirectories = [];
 
-    private static function createTempDirectory()
+    private static function createTempDirectory($className = null)
     {
-        if (self::$testTempDirectoryPath !== null) {
+        if ($className === null) {
+            $className = static::class;
+        }
+        if (isset(self::$testTempDirectories[$className])) {
             return true;
         }
         $path = null;
         while (($path === null) || is_dir($path) || file_exists($path)) {
-            $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'phpunit_' . md5(__CLASS__ . '::' . date('U') . rand(1000, 9999), false);
+            $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'phpunit_' . md5($className . '::' . date('U') . rand(1000, 9999), false);
         }
         if (mkdir($path, 0777, true)) {
-            self::$testTempDirectoryPath = $path;
+            self::$testTempDirectories[$className] = $path;
             return true;
         }
         return false;
     }
 
-    private function getTempDirectoryPath()
+    private function getTempDirectoryPath($className = null)
     {
-        return self::$testTempDirectoryPath;
+        if ($className === null) {
+            $className = static::class;
+        }
+        return (isset(self::$testTempDirectories[$className]) ? self::$testTempDirectories[$className] : null);
     }
 
-    private function assertTempDirectoryDefined()
+    private static function deleteTempDirectory($className = null)
     {
-        $this->assertTrue($this->createTempDirectory(), 'Path not null');
-    }
-
-    private function assertTempDirectoryDeleted()
-    {
-        self::deleteTempDirectory();
-        $this->assertTrue($this->getTempDirectoryPath() === null, 'Path is null');
-    }
-
-    private static function deleteTempDirectory()
-    {
-        if (self::$testTempDirectoryPath === null) {
+        if ($className === null) {
+            $className = static::class;
+        }
+        if (isset(self::$testTempDirectories[$className]) === false) {
             return;
         }
-        self::deleteDirectory(self::$testTempDirectoryPath);
-        self::$testTempDirectoryPath = null;
+        self::deleteDirectory(self::$testTempDirectories[$className]);
+        unset(self::$testTempDirectories[$className]);
     }
 
     private static function deleteDirectory($path)

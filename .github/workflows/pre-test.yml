@@ -1,5 +1,5 @@
 name: Pre-Test
-description: PHP, Composer, PHPUnit
+description: PHP 8.2, Composer, PHPUnit (offline)
 
 on:
   workflow_dispatch:
@@ -40,8 +40,5 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
-
-    - name: Run PHPUnit tests suite
-      run: composer run-script test
+    - name: Run PHPUnit tests (offline) suite
+      run: composer run-script test-offline

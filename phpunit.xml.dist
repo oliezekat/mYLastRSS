@@ -14,5 +14,11 @@
     <logging>
         <junit outputFile="var/outputs/phpunit/logfile.xml"/>
         <testdoxText outputFile="var/outputs/phpunit/testdox.txt"/>
+        <!-- 
+        PHPUnit 5.7 don't support junit and testdoxText nodes 
+        https://phpunit.de/manual/5.7/en/
+        <log type="junit" target="var/outputs/phpunit/logfile.xml"/>
+        <log type="testdox-text" target="var/outputs/phpunit/testdox.txt"/>
+        -->
     </logging>
 </phpunit>
