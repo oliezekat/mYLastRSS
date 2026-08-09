@@ -11,6 +11,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     strategy:
       matrix:
@@ -24,7 +25,13 @@ jobs:
       with:
         php-version: ${{ matrix.php }}
         extensions: mbstring, iconv, openssl
-        ini-values: allow_url_fopen=On, max_execution_time=30, error_reporting=E_ALL, display_errors=On, display_startup_errors=On
+        ini-values: |
+          allow_url_fopen=On
+          max_execution_time=120
+          default_socket_timeout=30
+          error_reporting=E_ALL
+          display_errors=On
+          display_startup_errors=On
         tools: composer
 
     - name: Get composer cache directory

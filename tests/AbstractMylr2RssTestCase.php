@@ -15,7 +15,7 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
 
     public static function tear_down_after_class()
     {
-        // self::deleteTempDirectory();
+        self::deleteTempDirectory();
     }
 
     /* AbstractClassTestCase */
@@ -50,10 +50,10 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
     protected function createClassInstance()
     {
         $className = $this->getClassName();
-        $instance                = new $className();
-        $instance->cache_dir     = $this->getTestCachePath();
-        $instance->feed_title    = static::class . ' - Output';
-        $instance->feed_link     = 'https://github.com/oliezekat/mYLastRSS';
+        $instance                        = new $className();
+        $instance->cache_dir             = $this->getTestCachePath();
+        $instance->feed_title            = static::class . ' - Output';
+        $instance->feed_link             = 'https://github.com/oliezekat/mYLastRSS';
         return $instance;
     }
 

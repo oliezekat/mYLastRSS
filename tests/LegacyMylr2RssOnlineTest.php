@@ -6,10 +6,17 @@ final class LegacyMylr2RssOnlineTest extends AbstractMylr2RssTestCase
 {
     use SourcesProvidersTrait;
 
+    public static function set_up_before_class()
+    {
+        parent::set_up_before_class();
+        set_time_limit(90);
+    }
+
     protected function createClassInstance()
     {
         $instance                            = parent::createClassInstance();
         $instance->cache_feeds_if_failed     = true;
+        $instance->max_execution_time        = 50;
         return $instance;
     }
 
@@ -34,4 +41,26 @@ final class LegacyMylr2RssOnlineTest extends AbstractMylr2RssTestCase
         ];
         return $data;
     }
+
+    /**
+     * @testdox Class interface with OpenSSL extension
+     * @requires extension openssl
+     */
+    public function testClassInterface()
+    {
+        parent::testClassInterface();
+    }
+
+    /**
+     * @testdox Get sources force-cached over HTTPS
+     * @requires extension openssl
+     * @large
+     * @depends testClassInterface
+     * @dataProvider sourcesProvider
+     */
+    public function testGet($sources, $minItems)
+    {
+        parent::testGet($sources, $minItems);
+    }
+
 }
