@@ -40,9 +40,8 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
 
     private function getTestOutputFilePath()
     {
-        $outputDirPath = implode(DIRECTORY_SEPARATOR, ['var','outputs','phpunit']);
-        @mkdir($outputDirPath, 0777, true);
-        return implode(DIRECTORY_SEPARATOR, [$outputDirPath, str_replace('\\', '-', static::class) . '-Output.xml']);
+        self::createTempDirectory();
+        return implode(DIRECTORY_SEPARATOR, [$this->getTempDirectoryPath(), str_replace('\\', '-', static::class) . '-Output.xml']);
     }
 
     /**
