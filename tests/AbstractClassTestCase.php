@@ -2,7 +2,7 @@
 
 namespace Oliezekat\MyLastRss\Tests;
 
-use PHPUnit\Framework\TestCase;
+use Yoast\PHPUnitPolyfills\TestCases\TestCase;
 
 abstract class AbstractClassTestCase extends TestCase
 {

@@ -8,7 +8,12 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
 
     /* TempDirectoryTrait */
 
-    public function __destruct()
+    public static function set_up_before_class()
+    {
+        self::createTempDirectory();
+    }
+
+    public static function tear_down_after_class()
     {
         self::deleteTempDirectory();
     }
@@ -34,13 +39,11 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
 
     private function getTestCachePath()
     {
-        self::createTempDirectory();
         return $this->getTempDirectoryPath() . DIRECTORY_SEPARATOR . 'cache';
     }
 
     private function getTestOutputFilePath()
     {
-        self::createTempDirectory();
         return implode(DIRECTORY_SEPARATOR, [$this->getTempDirectoryPath(), str_replace('\\', '-', static::class) . '-Output.xml']);
     }
 
