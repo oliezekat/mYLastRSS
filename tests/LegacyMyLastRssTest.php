@@ -16,6 +16,9 @@ final class LegacyMyLastRssTest extends AbstractClassTestCase
         return ['Get', 'GetCache'];
     }
 
+    /**
+     * @requires extension mbstring
+     */
     public function testClassInterface()
     {
         parent::testClassInterface();
