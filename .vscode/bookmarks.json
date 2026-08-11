@@ -9,19 +9,59 @@
 					"label": "todo if php 5 or with cp"
 				},
 				{
-					"line": 238,
+					"line": 1113,
 					"column": 0,
-					"label": "todo polyfill utf8_encode"
+					"label": "any iso-8859-x"
 				},
 				{
-					"line": 1009,
+					"line": 3188,
 					"column": 0,
-					"label": "todo polyfill utf8_encode"
+					"label": "todo support timeout option"
 				},
 				{
-					"line": 3624,
+					"line": 3256,
+					"column": 0,
+					"label": "use property var"
+				},
+				{
+					"line": 3358,
+					"column": 0,
+					"label": "use property var"
+				},
+				{
+					"line": 3482,
+					"column": 0,
+					"label": "use property var"
+				},
+				{
+					"line": 3639,
 					"column": 0,
 					"label": "todo with encoding"
+				}
+			]
+		},
+		{
+			"path": "mylastrss/misc/mylr2rss/mylr2rss.class.php",
+			"bookmarks": [
+				{
+					"line": 119,
+					"column": 0,
+					"label": "with encoding"
+				},
+				{
+					"line": 138,
+					"column": 0,
+					"label": "with encoding"
+				},
+				{
+					"line": 319,
+					"column": 0,
+					"label": "with encoding"
+				},
+				{
+					"line": 324,
+					"column": 0,
+					"label": "with encoding"
 				}
 			]
 		}
