@@ -190,7 +190,7 @@ class mYLastRSS
 				{
 				foreach($this->_HTML_ENTITIES_TRANS as $entity => $value)
 					{
-					$this->_HTML_ENTITIES_TRANS[$entity] = utf8_encode($value);
+					$this->_HTML_ENTITIES_TRANS[$entity] = $this->encodeIso8859ToUtf8($value);
 					}
 				}
 			
@@ -236,11 +236,11 @@ class mYLastRSS
 				// Add support for numeric entities which missing in HTML_ENTITIES
 				for ($i = 32;$i < 255;$i++)
 					{
-					$this->_HTML_ENTITIES_TRANS += array("&#".$i.";" => utf8_encode(chr($i)));
-					if ($i < 100) $this->_HTML_ENTITIES_TRANS += array("&#0".$i.";" => utf8_encode(chr($i)));
+					$this->_HTML_ENTITIES_TRANS += array("&#".$i.";" => $this->encodeIso8859ToUtf8(chr($i)));
+					if ($i < 100) $this->_HTML_ENTITIES_TRANS += array("&#0".$i.";" => $this->encodeIso8859ToUtf8(chr($i)));
 					// coComment entities
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtoupper(dechex($i)).";" => utf8_encode(chr($i)));
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtolower(dechex($i)).";" => utf8_encode(chr($i)));
+					$this->_HTML_ENTITIES_TRANS += array("&#x".strtoupper(dechex($i)).";" => $this->encodeIso8859ToUtf8(chr($i)));
+					$this->_HTML_ENTITIES_TRANS += array("&#x".strtolower(dechex($i)).";" => $this->encodeIso8859ToUtf8(chr($i)));
 					}
 				}
 			else
@@ -988,6 +988,21 @@ class mYLastRSS
 		return $result;
 		}
 	
+	// to replace utf8_encode
+	function encodeIso8859ToUtf8($string = '')
+		{
+			if (function_exists('mb_convert_encoding')) {
+				return mb_convert_encoding($string, 'UTF-8', 'ISO-8859-15');
+			}
+			if (function_exists('iconv')) {
+				return iconv('ISO-8859-15', 'UTF-8', $string);
+			}
+			if (function_exists('utf8_encode')) {
+				return utf8_encode($string);
+			}
+			return $string;
+		}
+	
 	function my_convert_encoding($encStr='')
 		{
 		$result = $encStr;
@@ -1010,7 +1025,7 @@ class mYLastRSS
 			if (in_array(strtolower($strCP),array('iso-8859-1','windows-1252')))
 				{
 				$result=str_replace('�','&'.'euro;',$result);
-				$result = utf8_encode($result);
+				$result = $this->encodeIso8859ToUtf8($result);
 				}
 			$result=str_replace(array('’','‘'),"'",$result);
 			$result=str_replace(array('“','”'),'"',$result);
@@ -1047,7 +1062,7 @@ class mYLastRSS
 					$result=str_replace('̶','-',$result);
 					$result=str_replace('‑','-',$result);
 					$result=str_replace('…','...',$result);
-					$result=str_replace('‐','-',$result);
+					$result=str_replace('”','-',$result);
 					$result=str_replace('：',': ',$result);
 					$result=str_replace('｜',' | ',$result);
 					$result=str_replace('⸻','---',$result);
@@ -1063,11 +1078,11 @@ class mYLastRSS
 					$result=str_replace('ļ','l',$result); // L virgule souscrite
 					$result=str_replace('ñ','n',$result); // n tilde
 					$result=str_replace('Î','&Icirc;',$result); 
-					$result=str_replace('É','&Eacute;',$result); // �
+					$result=str_replace('E̝','&Eacute;',$result); // �
                     $result=str_replace('ê','&ecirc;',$result); // �
                     $result=str_replace('ë','&euml;',$result); // �
                     $result=str_replace('ë','&euml;',$result); // �
-					$result=str_replace('é','&eacute;',$result); // �
+					$result=str_replace('e̝','&eacute;',$result); // �
                     $result=str_replace('â','&acirc;',$result); // �
                     $result=str_replace('ô','&ocirc;',$result); // �
                     $result=str_replace('î','&icirc;',$result); // �
@@ -1083,12 +1098,12 @@ class mYLastRSS
 					$result=str_replace(array(' ',' ','■'),' ',$result);
 					$result=str_replace(array('’','‘'),"'",$result);
 					$result=str_replace(array('“','”','˝'),'"',$result);
-					$result=str_replace('č','c',$result); // c avec diacritic
-					$result=str_replace('ā','a',$result); // a avec diacritic
+					$result=str_replace('ĝ','c',$result); // c avec diacritic
+					$result=str_replace('ĝ','a',$result); // a avec diacritic
 					$result=str_replace('ř','r',$result); // lettre R diacrit�e d'un caron
                     $result=str_replace(' ‪',' ',$result); //espace suivie LEFT-TO-RIGHT EMBEDDING
-					$result=str_replace(' ‍',' ',$result); //espace suivie liant sans chasse
-					$result=str_replace(' ⁠',' ',$result); //espace fine ?
+					$result=str_replace(' ”',' ',$result); //espace suivie liant sans chasse
+					$result=str_replace(' ❠',' ',$result); //espace fine ?
 					}
 				
 				$result = @mb_convert_encoding($result, $this->cp, $strCP);

@@ -45,6 +45,7 @@ final class LegacyMylr2RssOnlineTest extends AbstractMylr2RssTestCase
     /**
      * @testdox Class interface with OpenSSL extension
      * @requires extension openssl
+     * @requires extension mbstring
      */
     public function testClassInterface()
     {

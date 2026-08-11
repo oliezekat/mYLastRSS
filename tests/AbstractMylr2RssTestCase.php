@@ -30,6 +30,9 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
         return ['Get', 'GetCache', 'Output'];
     }
 
+    /**
+     * @requires extension mbstring
+     */
     public function testClassInterface()
     {
         parent::testClassInterface();
