@@ -19,22 +19,7 @@
 					"label": "todo support timeout option"
 				},
 				{
-					"line": 3256,
-					"column": 0,
-					"label": "use property var"
-				},
-				{
-					"line": 3358,
-					"column": 0,
-					"label": "use property var"
-				},
-				{
-					"line": 3482,
-					"column": 0,
-					"label": "use property var"
-				},
-				{
-					"line": 3639,
+					"line": 3644,
 					"column": 0,
 					"label": "todo with encoding"
 				}

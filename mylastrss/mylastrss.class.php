@@ -1218,11 +1218,11 @@ class mYLastRSS
 				{
 				$options['transport'] = 'WpRequests';
 				}
-			else if (class_exists('Requests'))
+			else if (class_exists('\Requests'))
 				{
 				$options['transport'] = 'Requests';
 				}
-			else if (class_exists('Snoopy'))
+			else if (class_exists('\Snoopy'))
 				{
 				$options['transport'] = 'Snoopy';
 				}
@@ -3096,7 +3096,7 @@ class mYLR_Client
 			}
 		else if ($this->_transport_name === 'Requests')
 			{
-            if (class_exists('Requests') === false)
+            if (class_exists('\Requests') === false)
                 {
                 throw new \Exception("Transport class of " . $this->_transport_name . " not found.", 500);
                 }
@@ -3105,7 +3105,7 @@ class mYLR_Client
 			}
 		else if ($this->_transport_name === 'Snoopy')
 			{
-            if (class_exists('Snoopy') === false)
+            if (class_exists('\Snoopy') === false)
                 {
                 throw new \Exception("Transport class of " . $this->_transport_name . " not found.", 500);
                 }
@@ -3254,7 +3254,8 @@ class mYLR_Transport_Snoopy
 	
 	function mYLR_Transport_Snoopy($options = array())
 		{
-		$this->_snoopy = new Snoopy();
+		$className = '\Snoopy';
+		$this->_snoopy = new $className();
 		$this->_snoopy->maxframes		 = 1;
 		$this->_snoopy->maxredirs		 = 4;
 		$this->_snoopy->offsiteok		 = TRUE;
@@ -3356,7 +3357,8 @@ class mYLR_Transport_Requests
 	
 	function mYLR_Transport_Requests($options = array())
 		{
-		Requests::register_autoloader();
+		$className = '\Requests';
+		$className::register_autoloader();
 		if (is_array($options))
 			{
 			if (isset($options['time-out']) AND (0 < $options['time-out']))
@@ -3375,10 +3377,11 @@ class mYLR_Transport_Requests
 	
 	function getContent($source = '')
 		{
+		$className = '\Requests';
 		$raw_content = '';
 		try
 			{
-			$this->_response = Requests::get($source, $this->_headers, $this->_options);
+			$this->_response = $className::get($source, $this->_headers, $this->_options);
 			if ($this->_response->status_code === 200)
 				{
 				$raw_content = $this->_response->body;
@@ -3480,7 +3483,8 @@ class mYLR_Transport_WpRequests
 	
 	function mYLR_Transport_WpRequests($options = array())
 		{
-		WpOrg\Requests\Autoload::register();
+		$className = 'WpOrg\Requests\Autoload';
+		$className::register();
 		if (is_array($options))
 			{
 			if (isset($options['time-out']) AND (0 < $options['time-out']))
@@ -3499,10 +3503,11 @@ class mYLR_Transport_WpRequests
 	
 	function getContent($source = '')
 		{
+		$className = 'WpOrg\Requests\Requests';
 		$raw_content = '';
 		try
 			{
-			$this->_response = WpOrg\Requests\Requests::get($source, $this->_headers, $this->_options);
+			$this->_response = $className::get($source, $this->_headers, $this->_options);
 			if ($this->_response->status_code === 200)
 				{
 				$raw_content = $this->_response->body;
