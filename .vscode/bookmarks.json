@@ -19,6 +19,11 @@
 					"label": "todo support timeout option"
 				},
 				{
+					"line": 3626,
+					"column": 0,
+					"label": "add encoding"
+				},
+				{
 					"line": 3644,
 					"column": 0,
 					"label": "todo with encoding"
@@ -37,6 +42,31 @@
 					"line": 138,
 					"column": 0,
 					"label": "with encoding"
+				},
+				{
+					"line": 164,
+					"column": 0,
+					"label": "add encoding"
+				},
+				{
+					"line": 193,
+					"column": 0,
+					"label": "add encoding"
+				},
+				{
+					"line": 201,
+					"column": 0,
+					"label": "add encoding"
+				},
+				{
+					"line": 205,
+					"column": 0,
+					"label": "add encoding"
+				},
+				{
+					"line": 212,
+					"column": 0,
+					"label": "add encoding"
 				},
 				{
 					"line": 319,
