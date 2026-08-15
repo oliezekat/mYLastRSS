@@ -113,7 +113,9 @@ class mYLastRSS
 	// To support Media RSS
 	var $enable_MediaRSS = TRUE; // Deprecated
 	var $_MRSS_CONTENT_MIMES_TYPES 	= array('image/avif','image/webp','image/gif','image/jpeg','image/pjpeg','image/png','audio/mpeg','video/jpeg','video/mp4','video/quicktime','video/x-flv','application/x-shockwave-flash','video/x-msvideo','video/3gpp');
-		
+	var $_ANSI_ENCODING = 'ISO-8859-15';
+	var $_ANSI_ENCODINGS = array('ISO-8859-1', 'ISO8859-1', 'ISO-8859-15', 'ISO8859-15', 'CP1252', 'WINDOWS-1252', '1252');
+
 	// Internal global vars
 	var $_USE_SEVERAL_SOURCES 	= FALSE;
 	var $_STARTED_INDEX 		= 0;
@@ -182,7 +184,7 @@ class mYLastRSS
 			{
 			// Init _HTML_ENTITIES_TRANS array for unhtmlentities()
 			// Get HTML entities table
-			$this->_HTML_ENTITIES_TRANS = get_html_translation_table (HTML_ENTITIES, ENT_QUOTES, 'ISO-8859-15'); // if default_charset is UTF-8
+			$this->_HTML_ENTITIES_TRANS = get_html_translation_table (HTML_ENTITIES, ENT_QUOTES, $this->_ANSI_ENCODING); // if default_charset is UTF-8
 			// Flip keys<==>values
 			$this->_HTML_ENTITIES_TRANS = array_flip ($this->_HTML_ENTITIES_TRANS);
 			
@@ -254,15 +256,15 @@ class mYLastRSS
 					$this->_HTML_ENTITIES_TRANS += array("&#x".strtoupper(dechex($i)).";" => chr($i));
 					$this->_HTML_ENTITIES_TRANS += array("&#x".strtolower(dechex($i)).";" => chr($i));
 					}
-					
-				$this->_HTML_ENTITIES_TRANS['&szlig;']	 = 'ß';
 				}
-			if (in_array(strtolower($this->cp),array('iso-8859-1','windows-1252')))
+			if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
 				{
+				$this->_HTML_ENTITIES_TRANS['&szlig;']	 = 'ß';
 				$this->_HTML_ENTITIES_TRANS["&euro;"]	 = '€';
                 $this->_HTML_ENTITIES_TRANS["&copy;"]	 = '©';
 				}
-			$this->_HTML_ENTITIES_TRANS["&#xa0;"]	 = ' ';
+			$this->_HTML_ENTITIES_TRANS["&#xa0;"]	 = ' '; // espace fine insecable
+			$this->_HTML_ENTITIES_TRANS["&#160;"]	 = ' '; // espace fine insecable
 			$this->_HTML_ENTITIES_TRANS["&#038;"]	 = '&';
 			$this->_HTML_ENTITIES_TRANS["&#39;"]	 = "'";
 			$this->_HTML_ENTITIES_TRANS["&#34;"]	 = '"';
@@ -992,10 +994,10 @@ class mYLastRSS
 	function encodeIso8859ToUtf8($string = '')
 		{
 			if (function_exists('mb_convert_encoding')) {
-				return mb_convert_encoding($string, 'UTF-8', 'ISO-8859-15');
+				return mb_convert_encoding($string, 'UTF-8', $this->_ANSI_ENCODING);
 			}
 			if (function_exists('iconv')) {
-				return iconv('ISO-8859-15', 'UTF-8', $string);
+				return iconv($this->_ANSI_ENCODING, 'UTF-8', $string);
 			}
 			if (function_exists('utf8_encode')) {
 				return utf8_encode($string);
@@ -1022,9 +1024,10 @@ class mYLastRSS
 		// If code page is set convert character encoding to required
 		if (strtoupper($this->cp) == 'UTF-8')
 			{
-			if (in_array(strtolower($strCP),array('iso-8859-1','windows-1252')))
+			if (in_array(strtoupper($strCP), $this->_ANSI_ENCODINGS))
 				{
-				$result=str_replace('€','&'.'euro;',$result);
+				$result=str_replace('€','&euro;',$result);
+				$result=str_replace('ß','&szlig;',$result);
 				$result = $this->encodeIso8859ToUtf8($result);
 				}
 			$result=str_replace(array('â€™','â€˜'),"'",$result);
@@ -1111,7 +1114,7 @@ class mYLastRSS
 				$result=str_replace('œ','oe',$result);
 				$result=str_replace('Œ','OE',$result);
 				
-				if (in_array(strtolower($this->cp),array('iso-8859-1','windows-1252')))
+				if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
 					{
                     $result = str_replace(' ',' ',$result); // Espace etrange, insecable en ANSI ?
 					$result=str_replace(array('´','’'),"'",$result);
