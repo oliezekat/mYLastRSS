@@ -4,22 +4,17 @@
 			"path": "mylastrss/mylastrss.class.php",
 			"bookmarks": [
 				{
-					"line": 186,
-					"column": 0,
-					"label": "todo if php 5 or with cp"
-				},
-				{
-					"line": 3191,
+					"line": 3242,
 					"column": 0,
 					"label": "todo support timeout option"
 				},
 				{
-					"line": 3629,
+					"line": 3680,
 					"column": 0,
 					"label": "add encoding"
 				},
 				{
-					"line": 3647,
+					"line": 3698,
 					"column": 0,
 					"label": "todo with encoding"
 				}

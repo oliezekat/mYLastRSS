@@ -178,99 +178,148 @@ class mYLastRSS
         $this->_GLOBAL_XMLNS = $MYLR_XMLNS;
         }
             
+	function _getEntitiesTranslations()
+		{
+		// Get HTML entities table
+		$nbAllowedArgs = (new ReflectionFunction('get_html_translation_table'))->getNumberOfParameters();
+		$args = array(HTML_ENTITIES, ENT_QUOTES);
+		if ($nbAllowedArgs <= 2) {
+			// PHP 5.6 issue
+			$transTableEncoding = $this->_ANSI_ENCODING; // look like not depends default_charset
+		} else {
+			if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
+				{
+				$transTableEncoding = $this->_ANSI_ENCODING;
+				}
+			else 
+				{
+				$transTableEncoding = $this->cp;
+				}
+			$args[] = $transTableEncoding;
+		}
+		$transTable = call_user_func_array('get_html_translation_table', $args);
+		$map = [];
+		foreach($transTable as $value => $entity)
+			{
+			if (empty($entity)) continue;
+			if (strtoupper($this->cp) !== strtoupper($transTableEncoding))
+				{
+				if ((strtoupper($this->cp) === 'UTF-8') && (in_array(strtoupper($transTableEncoding), $this->_ANSI_ENCODINGS)))
+					{
+					$value = $this->encodeIso8859ToUtf8($value);
+					}
+				else if ((in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS)) && ($transTableEncoding === $this->_ANSI_ENCODING))
+					{
+					// uses $value as is
+					}
+				else if (function_exists('mb_convert_encoding'))
+					{
+					$value = mb_convert_encoding($value, $this->cp, $transTableEncoding);
+					}
+				else
+					{
+					// MBString extension require
+					break;
+					}
+				}
+			$map[$entity] = $value;
+			}
+		return $map;
+        }
+            
 	function _InitEntitiesArray()
 		{
 		if ((is_array($this->_HTML_ENTITIES_TRANS) === FALSE) OR (count($this->_HTML_ENTITIES_TRANS) === 0))
 			{
 			// Init _HTML_ENTITIES_TRANS array for unhtmlentities()
-			// Get HTML entities table
-			$this->_HTML_ENTITIES_TRANS = get_html_translation_table (HTML_ENTITIES, ENT_QUOTES, $this->_ANSI_ENCODING); // if default_charset is UTF-8
-			// Flip keys<==>values
-			$this->_HTML_ENTITIES_TRANS = array_flip ($this->_HTML_ENTITIES_TRANS);
+			$this->_HTML_ENTITIES_TRANS = $this->_getEntitiesTranslations();
 			
-			if (strtoupper($this->cp) == 'UTF-8')
+			// Add support for numeric entities which missing in HTML_ENTITIES
+			for ($i = 32; $i < 255; $i++)
 				{
-				foreach($this->_HTML_ENTITIES_TRANS as $entity => $value)
+				if (strtoupper($this->cp) === 'UTF-8')
 					{
-					$this->_HTML_ENTITIES_TRANS[$entity] = $this->encodeIso8859ToUtf8($value);
+					$value = $this->encodeIso8859ToUtf8(chr($i));
 					}
+				else if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
+					{
+					$value = chr($i);
+					}
+				else 
+					{
+					break;
+					}
+				$entity = "&#".$i.";";
+				$this->_HTML_ENTITIES_TRANS[$entity]	 = $value;
+				$entity = "&#0".$i.";";
+				if ($i < 100) 
+					{
+					$this->_HTML_ENTITIES_TRANS[$entity] = $value;
+					}
+				// coComment entities
+				$entity = "&#x".strtoupper(dechex($i)).";";
+				$this->_HTML_ENTITIES_TRANS[$entity]	 = $value;
+				$entity = "&#x".strtolower(dechex($i)).";";
+				$this->_HTML_ENTITIES_TRANS[$entity]	 = $value;
 				}
-			
+
 			// Add support for entities which missing in HTML_ENTITIES
-			$this->_HTML_ENTITIES_TRANS += array("&apos;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&quot;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&lt;" => '<');
-			$this->_HTML_ENTITIES_TRANS += array("&gt;" => '>');
-			$this->_HTML_ENTITIES_TRANS += array("&amp;" => '&');
-			$this->_HTML_ENTITIES_TRANS += array("&mdash;" => '-');
-			$this->_HTML_ENTITIES_TRANS += array("&ndash;" => '-');
-			$this->_HTML_ENTITIES_TRANS += array("&bull;" => '-');
-			$this->_HTML_ENTITIES_TRANS["&nbsp;"] = ' ';
-			$this->_HTML_ENTITIES_TRANS["&oelig;"] = 'oe';
-			$this->_HTML_ENTITIES_TRANS["&#x153;"] = 'oe';
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x202F;" => " ");
-			$this->_HTML_ENTITIES_TRANS["&hellip;"] = '...';
-			// Entities from OpenOffice
-			$this->_HTML_ENTITIES_TRANS += array("&rsquo;" => "'"); 
-			$this->_HTML_ENTITIES_TRANS += array("&lsquo;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&lrsquo;" => "'");
-			// add &ldquo; &rdquo; &lsquo; &rsquo; 
-			// Entities from Delicious
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2013;" => "-");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2014;" => "-");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2019;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x201C;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x201D;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2026;" => "...");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x203A;" => ">");
-			// Entities from WordPress
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8211;" => "-");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8216;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8217;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8220;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8221;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8230;" => '...');
-			// From Fanfou
-			$this->_HTML_ENTITIES_TRANS += array("&"."#65306;" => ':');
-			
-			if (strtoupper($this->cp) == 'UTF-8')
+			if (strtoupper($this->cp) === 'UTF-8')
 				{
-				// Add support for numeric entities which missing in HTML_ENTITIES
-				for ($i = 32;$i < 255;$i++)
-					{
-					$this->_HTML_ENTITIES_TRANS += array("&#".$i.";" => $this->encodeIso8859ToUtf8(chr($i)));
-					if ($i < 100) $this->_HTML_ENTITIES_TRANS += array("&#0".$i.";" => $this->encodeIso8859ToUtf8(chr($i)));
-					// coComment entities
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtoupper(dechex($i)).";" => $this->encodeIso8859ToUtf8(chr($i)));
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtolower(dechex($i)).";" => $this->encodeIso8859ToUtf8(chr($i)));
-					}
+				$this->_HTML_ENTITIES_TRANS["&laquo;"]   = $this->_HTML_ENTITIES_TRANS["&#171;"]; // Entities from WordPress
+				$this->_HTML_ENTITIES_TRANS["&raquo;"]   = $this->_HTML_ENTITIES_TRANS["&#187;"]; // Entities from WordPress
 				}
-			else
-				{
-				// Add support for numeric entities which missing in HTML_ENTITIES
-				for ($i = 32;$i < 255;$i++)
-					{
-					$this->_HTML_ENTITIES_TRANS += array("&#".$i.";" => chr($i));
-					if ($i < 100) $this->_HTML_ENTITIES_TRANS += array("&#0".$i.";" => chr($i));
-					// coComment entities
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtoupper(dechex($i)).";" => chr($i));
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtolower(dechex($i)).";" => chr($i));
-					}
-				}
-			if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
+			else if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
 				{
 				$this->_HTML_ENTITIES_TRANS['&szlig;']	 = 'ß';
 				$this->_HTML_ENTITIES_TRANS["&euro;"]	 = '€';
                 $this->_HTML_ENTITIES_TRANS["&copy;"]	 = '©';
+				$this->_HTML_ENTITIES_TRANS["&laquo;"]   = '«'; // Entities from WordPress
+				$this->_HTML_ENTITIES_TRANS["&raquo;"]   = '»'; // Entities from WordPress
 				}
+			/* spaces */
+			$this->_HTML_ENTITIES_TRANS["&nbsp;"]	 = ' ';
 			$this->_HTML_ENTITIES_TRANS["&#xa0;"]	 = ' '; // espace fine insecable
 			$this->_HTML_ENTITIES_TRANS["&#160;"]	 = ' '; // espace fine insecable
-			$this->_HTML_ENTITIES_TRANS["&#038;"]	 = '&';
-			$this->_HTML_ENTITIES_TRANS["&#39;"]	 = "'";
-			$this->_HTML_ENTITIES_TRANS["&#34;"]	 = '"';
-			$this->_HTML_ENTITIES_TRANS["&#339;"]	 = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&#x202F;"]  = ' ';
 			$this->_HTML_ENTITIES_TRANS["&#xA;"]	 = PHP_EOL;
+			/* simple quotes */
+			$this->_HTML_ENTITIES_TRANS["&apos;"]	= "'";
+			$this->_HTML_ENTITIES_TRANS["&rsquo;"]	= "'"; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&lsquo;"]	= "'"; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&lrsquo;"]	= "'"; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&#x2019;"]	= "'"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#8216;"]	= "'"; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#8217;"]	= "'"; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#39;"]	= "'";
+			/* double quotes */
+			$this->_HTML_ENTITIES_TRANS["&quot;"]    = '"';
+			$this->_HTML_ENTITIES_TRANS["&#x201D;"]  = '"'; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#x201C;"]  = '"'; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#8220;"]   = '"'; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#8221;"]   = '"'; // Entities from WordPress
 			$this->_HTML_ENTITIES_TRANS["&#34;"]	 = '"';
+			$this->_HTML_ENTITIES_TRANS["&ldquo;"]	 = '"'; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&rdquo;"]	 = '"'; // Entities from OpenOffice
+			/* misc */
+			$this->_HTML_ENTITIES_TRANS["&#038;"]	 = '&';
+			$this->_HTML_ENTITIES_TRANS["&amp;"]	 = '&';
+			$this->_HTML_ENTITIES_TRANS["&#339;"]	 = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&oelig;"]	 = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&#x153;"]	 = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&hellip;"]  = '...';
+			$this->_HTML_ENTITIES_TRANS["&#8230;"]	 = '...'; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#x2026;"]	 = "..."; // Entities from Delicious		
+			$this->_HTML_ENTITIES_TRANS["&lt;"]		 = '<';
+			$this->_HTML_ENTITIES_TRANS["&gt;"]		 = '>';
+			$this->_HTML_ENTITIES_TRANS["&#x203A;"]	 = ">"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&mdash;"]	 = '-';
+			$this->_HTML_ENTITIES_TRANS["&ndash;"]	 = '-';
+			$this->_HTML_ENTITIES_TRANS["&bull;"]	 = '-';
+			$this->_HTML_ENTITIES_TRANS["&#x2013;"]	 = "-"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#x2014;"]	 = "-"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#8211;"]	 = "-"; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#65306;"]	 = ':'; // From Fanfou
 			}
 		}
 		
@@ -474,13 +523,14 @@ class mYLastRSS
 		if ($strict)
 			{
 			$string = str_replace(array('&amp;#038;','&amp;#38;','&amp;','&#x26;','&#38;','&#038;'),'&',$string);
-            $string = str_replace("&lt;&lt;",'«',$string);
-            $string = str_replace("&gt;&gt;",'»',$string);
+            $string = str_replace("&lt;&lt;",'&laquo;',$string);
+            $string = str_replace("&gt;&gt;",'&raquo;',$string);
 			}
 		
 		// Replace entities by values
 		$string = strtr ($string, $this->_HTML_ENTITIES_TRANS);
-		
+		/*
+		probably wrong
 		if (strtoupper($this->cp) == 'UTF-8')
 			{
 			$string = preg_replace_callback(
@@ -491,6 +541,7 @@ class mYLastRSS
 				$string
 				);
 			}
+		*/
 		return $string;
 		}
 
@@ -4203,6 +4254,8 @@ function mYLR_StripLastUL($content)
 
 // By Miguel Perez
 // http://fr.php.net/manual/fr/function.chr.php#77911
+// probably wrong
+/*
 function mYLR_unichr($c)
 	{
         if ($c <= 0x7F) {
@@ -4220,4 +4273,4 @@ function mYLR_unichr($c)
             return false;
         }
 	}
-
+*/
