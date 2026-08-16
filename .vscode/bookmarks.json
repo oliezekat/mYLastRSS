@@ -4,17 +4,22 @@
 			"path": "mylastrss/mylastrss.class.php",
 			"bookmarks": [
 				{
-					"line": 3242,
+					"line": 1328,
+					"column": 0,
+					"label": "todo: get charset from HTTP response header"
+				},
+				{
+					"line": 3234,
 					"column": 0,
 					"label": "todo support timeout option"
 				},
 				{
-					"line": 3680,
+					"line": 3672,
 					"column": 0,
 					"label": "add encoding"
 				},
 				{
-					"line": 3698,
+					"line": 3690,
 					"column": 0,
 					"label": "todo with encoding"
 				}

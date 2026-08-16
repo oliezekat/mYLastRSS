@@ -1095,7 +1095,6 @@ class mYLastRSS
 				if ($strCP == '')
 					{
 					$this->rsscp = $strCP = 'auto';
-					$this->_LAST_ERROR_MESSAGES[] = "mb_convert_encoding() not allow blank value encoding";
 					}
 					
 				if (in_array(strtolower($strCP),array('auto','utf-8')))
@@ -1177,7 +1176,6 @@ class mYLastRSS
 				if ($strCP == 'auto')
 					{
 					$this->rsscp = $strCP = '';
-					$this->_LAST_ERROR_MESSAGES[] = "iconv() not allow 'auto' value encoding";
 					}
 				$result = @iconv($strCP, $this->cp.'//TRANSLIT', $result);
 				}
@@ -1322,6 +1320,7 @@ class mYLastRSS
 			}
 		$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
 		
+		$this->rsscp = ''; 
 		$client = new mYLR_Client($this->_getSourceClientOptions($rss_url,$source_kidx));
 		if ($this->_sourceIsURL($rss_url))
 			{
@@ -1354,7 +1353,7 @@ class mYLastRSS
 			}
 			
 		// Clean-up first lines (and prevent PHP/Apache errors displayed)
-		if (($posXML = strpos($rss_content,'<?xml')) AND ($posXML > 0))
+		if (($posXML = strpos($rss_content,'<?xml')) && ($posXML !== false) && ($posXML > 0))
 			{
 			$rss_content = trim(substr($rss_content,$posXML));
 			}
@@ -1364,6 +1363,21 @@ class mYLastRSS
 		$rss_content = trim(mYLR_TrimXmlTags($rss_content));
 		// Create header chunk to detect format
 		$rss_content_chunk = trim(strtolower(substr($rss_content,0,350)));
+		// Parse document encoding
+		if (strpos($rss_content_chunk,'<?xml') !== false)
+			{
+			preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content_chunk, $out_encoding);
+			if (isset($out_encoding[1]))
+				{ 
+				$this->rsscp = trim($out_encoding[1]); 
+				}
+			}
+		if ($this->rsscp === '')
+			{
+			$this->rsscp = $this->default_cp;
+			$this->_LAST_ERROR_MESSAGES[] = "Encoding not found from '$rss_url'";
+			}
+
 		
 		if (strlen($rss_content_chunk) == 0)
 			{
@@ -1395,8 +1409,8 @@ class mYLastRSS
 		else if ((strpos($rss_content_chunk,'<rss') !== FALSE) OR (strpos($rss_content_chunk,'<rdf') !== FALSE))
 			{
 			$result = array();
-			$result['source_url'] 	= $rss_url;
-			$result['source_kidx'] 	= $source_kidx;
+			$result['source_url']	 	 = $rss_url;
+			$result['source_kidx']	 	 = $source_kidx;
 			$feed_format = '';
 			if (strpos($rss_content_chunk,'<rss') !== FALSE)
 				{
@@ -1406,17 +1420,9 @@ class mYLastRSS
 				{
 				$feed_format = 'rdf';
 				}
-			$result['feed_format'] = $feed_format;
-			$result['generator'] = '';
-
-			// Parse document encoding
-			$result['encoding'] = $this->my_preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content);
-			// if document codepage is specified, use it
-			if ($result['encoding'] != '')
-				{ $this->rsscp = $result['encoding']; } // This is used in my_preg_match()
-			// otherwise use the default codepage
-			else
-				{ $this->rsscp = $this->default_cp; } // This is used in my_preg_match()
+			$result['feed_format']		 = $feed_format;
+			$result['generator']		 = '';
+			$result['encoding'] 		 = $this->rsscp;
 			
 			// detect extension namespaces
 			preg_match_all("'\sxmlns:(.*?)=[\'\"](.*?)[\'\"]'si", $rss_content, $nspaces_results);
@@ -2153,13 +2159,7 @@ class mYLastRSS
 		$result['source_kidx'] 		= $source_kidx;
 		$result['feed_format'] 		= 'sitemap';
 		$result['generator'] 		= '';
-        
-		// Parse document encoding
-		$result['encoding'] = $this->my_preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content);
-		if ($result['encoding'] != '')
-			{ $this->rsscp = $result['encoding']; } 
-		else
-			{ $this->rsscp = $this->default_cp; } 
+		$result['encoding'] 		= $this->rsscp;
 		
 		// detect extension namespaces
 		preg_match_all("'\sxmlns:(.*?)=[\'\"](.*?)[\'\"]'si", $rss_content, $nspaces_results);
@@ -2395,15 +2395,7 @@ class mYLastRSS
 		$result['source_kidx'] 		= $source_kidx;
 		$result['feed_format'] 		= 'atom';
 		$result['generator'] 		= '';
-
-		// Parse document encoding
-		$result['encoding'] = $this->my_preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content);
-		// if document codepage is specified, use it
-		if ($result['encoding'] != '')
-			{ $this->rsscp = $result['encoding']; } // This is used in my_preg_match()
-		// otherwise use the default codepage
-		else
-			{ $this->rsscp = $this->default_cp; } // This is used in my_preg_match()
+		$result['encoding'] 		= $this->rsscp;
 		
 		// detect extension namespaces
 		preg_match_all("'\sxmlns:(.*?)=[\'\"](.*?)[\'\"]'si", $rss_content, $nspaces_results);
