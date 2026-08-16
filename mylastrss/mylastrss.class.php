@@ -1141,8 +1141,8 @@ class mYLastRSS
                     $result=str_replace('Ã®','&icirc;',$result); // î
 					$result=str_replace('iÌˆ','&iuml;',$result); //i trema minuscule
                     $result=str_replace('iÌ‚','&icirc;',$result); // î
-                    $result=str_replace('Ã¹','&ugrave;',$result); // ù
-                    $result=str_replace('Ã§','&ccedil;',$result); // ç
+                    //$result=str_replace('Ã¹','&ugrave;',$result); // ù
+                    //$result=str_replace('Ã§','&ccedil;',$result); // ç
 					$result=str_replace('ÄŸ','g',$result); // g turc avec diacritic
 					$result=str_replace('Ð¡','C',$result); // C majuscule bizarre
 					$result=str_replace(array('Å“'),'oe',$result);
@@ -3675,34 +3675,19 @@ function mYLR_CompareSourcesTime($itemA,$itemB)
 	return ($itemAtime > $itemBtime) ? 1 : -1;
 	}
 
-// ADVICE: disabled because use CDATA TAG... More usefull for non-utf8 contents
-function mYLR_ContentEncoded($string,$mode='CDATA')
+function mYLR_ContentEncoded($string, $mode = 'CDATA', $encoding = null)
 	{
-	// Replace by entities
-	//$string = str_replace('&','&amp;',$string);
-	//$string = str_replace('@','&'.'#032;',$string);
-	//$string = str_replace(array("'"),'&'.'#039;',$string);
-	//$string = str_replace(array("'","`","‘","’"),'&'.'#039;',$string);
-	//$string = str_replace(array("“","”"),'&quot;',$string);
-	//$string = str_replace("…",'...',$string);
-	
-	
-	if ($mode == 'CDATA')
+	if ($mode === 'CDATA')
 		{
 		// Do nothing
 		}
 	else
 		{
-		// convert < > " ' & 
-		$string=htmlspecialchars($string);
+		$string = htmlspecialchars($string, ENT_COMPAT | ENT_HTML401, $encoding, true);
 		}
-	
 	// Remove duplicate entities
-	$string = str_replace('&amp;#','&#',$string);
-	
-	//$string = str_replace('é','&'.'eacute;',$string);
-	//$string = str_replace('´','&'.'acute;',$string);
-	$string = str_replace('&amp;euro;','&'.'euro;',$string);
+	$string = str_replace('&amp;#', '&#', $string);
+	$string = str_replace('&amp;euro;', '&euro;', $string);
 	return $string;
 	}
 
