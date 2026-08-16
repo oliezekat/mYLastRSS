@@ -8,6 +8,7 @@ class mYLR2RSS extends mYLastRSS
 	var $feed_stylesheet_type 		= '';
 	var $feed_xmlns			 		= '';
 	
+	var $feed_url 					= ''; // self link
 	var $feed_title 				= 'Unamed feed';
 	var $feed_link 					= '';
 	var $feed_description 			= '';
@@ -101,15 +102,13 @@ class mYLR2RSS extends mYLastRSS
 		
 		// Set RSS node
 		$echoer("<rss\n");
+		$echoer(" xmlns:atom=\"http://www.w3.org/2005/Atom\"\n");
 		$echoer(" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\"\n");
 		$echoer(" xmlns:wfw=\"http://wellformedweb.org/CommentAPI/\"\n");
 		$echoer(" xmlns:slash=\"http://purl.org/rss/1.0/modules/slash/\"\n");
 		$echoer(" xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n");
 		$echoer(" xmlns:dcterms=\"http://purl.org/dc/terms/\"\n");
 		if ($this->enable_MediaRSS == TRUE) $echoer(" xmlns:media=\"http://search.yahoo.com/mrss/\"\n");
-		$echoer(" xmlns:itunes=\"http://www.itunes.com/dtds/podcast-1.0.dtd\"\n");
-		$echoer(" xmlns:live=\"http://schemas.microsoft.com/live/spaces/2006/rss\"\n");
-		$echoer(" xmlns:mylr=\"http://mylastrss.sourceforge.net/\"\n");
 		$echoer($this->feed_xmlns);
 		$echoer(" version=\"2.0\">\n");
 		
@@ -117,7 +116,7 @@ class mYLR2RSS extends mYLastRSS
 		$echoer("<channel>\n");
 		$echoer("<title><![CDATA[".$this->feed_title."]]></title>\n");
 		$echoer("<link><![CDATA[".parent::unhtmlentities($this->feed_link)."]]></link>\n");
-		$echoer("<description><![CDATA[".htmlspecialchars(parent::unhtmlentities($this->feed_description),ENT_COMPAT)."]]></description>\n");
+		$echoer("<description><![CDATA[".mYLR_ContentEncoded(parent::unhtmlentities($this->feed_description),'CDATA',$this->cp)."]]></description>\n");
 		if ($this->feed_category != '')		$echoer("<category>".$this->feed_category."</category>\n");
 		if ($this->feed_editor != '')		$echoer("<managingEditor>".$this->feed_editor."</managingEditor>\n");
 		if ($this->feed_webmaster != '')	$echoer("<webMaster>".$this->feed_webmaster."</webMaster>\n");
@@ -129,6 +128,10 @@ class mYLR2RSS extends mYLastRSS
 			}
 		$echoer("<docs>".$this->feed_docs."</docs>\n");
 		if ($this->cache_time > 0) $echoer("<ttl>".ceil($this->cache_time / 60)."</ttl>\n\n");
+		if ($this->feed_url != '')
+			{
+			$echoer("<atom:link href=\"".mYLR_URLentities($this->feed_url)."\" rel=\"self\" type=\"application/rss+xml\" />\n");
+			}
 		
 		// Set Channel image node
 		if ($this->feed_image_url != '')
@@ -136,7 +139,7 @@ class mYLR2RSS extends mYLastRSS
 			$echoer("<image>\n");
 			$echoer("<url><![CDATA[".$this->feed_image_url."]]></url>\n");
 			$echoer("<title>".$this->feed_image_title."</title>\n");
-			$echoer("<description>".htmlspecialchars(parent::unhtmlentities($this->feed_image_description),ENT_COMPAT)."</description>\n");
+			$echoer("<description>".mYLR_ContentEncoded(parent::unhtmlentities($this->feed_image_description),NULL,$this->cp)."</description>\n");
 			$echoer("<link><![CDATA[".$this->feed_image_link."]]></link>\n");
 			$echoer("<width>".$this->feed_image_width."</width>\n");
 			$echoer("<height>".$this->feed_image_height."</height>\n");
@@ -162,14 +165,14 @@ class mYLR2RSS extends mYLastRSS
 			// Title, guid, link
 			if (strtoupper($this->cp) == 'UTF-8')
 				{
-				$echoer("<title>".mYLR_ContentEncoded(strip_tags(parent::unhtmlentities($item['title'])),NULL)."</title>\n"); 
+				$echoer("<title>".mYLR_ContentEncoded(strip_tags(parent::unhtmlentities($item['title'])),NULL,$this->cp)."</title>\n"); 
 				}
 			else
 				{
 				$echoer("<title><![CDATA[".strip_tags(parent::unhtmlentities($item['title']))."]]></title>\n");
 				}
 			
-			if ($item['guid'] != '')
+			if (isset($item['guid']) && ($item['guid'] != ''))
 				{
 				if (isset($item['guid_isPermaLink']))
 					{
@@ -191,7 +194,7 @@ class mYLR2RSS extends mYLastRSS
 				{
 				$echoer("<guid isPermaLink=\"false\"><![CDATA[".$item['kidx']."]]></guid>\n");
 				}
-			$echoer("<link><![CDATA[".mYLR_ContentEncoded(parent::unhtmlentities($item['link']),'CDATA')."]]></link>\n");
+			$echoer("<link><![CDATA[".mYLR_ContentEncoded(parent::unhtmlentities($item['link']),'CDATA',$this->cp)."]]></link>\n");
 			
 			if (isset($item['description']) && ($item['description'] !== ''))
 				{
@@ -199,18 +202,18 @@ class mYLR2RSS extends mYLastRSS
 				$echoer("<description><![CDATA[".$description." ]]></description>\n");
 				if (isset($item['content:encoded']) && ($item['content:encoded'] !== ''))
 					{
-					$echoer("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['content:encoded']),'CDATA')." ]]></content:encoded>\n");
+					$echoer("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['content:encoded']),'CDATA',$this->cp)." ]]></content:encoded>\n");
 					}
 				else
 					{
-					$echoer("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['description']),'CDATA')." ]]></content:encoded>\n");
+					$echoer("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['description']),'CDATA',$this->cp)." ]]></content:encoded>\n");
 					}
 				}
 			else if (isset($item['content:encoded']) && ($item['content:encoded'] !== ''))
 				{
 				$description = strip_tags(str_replace(array("\r","\n",'</P>','</p>','</LI>','</li>','<BR>','<br>','<BR />','<br />','<BR/>','<br/>','</div>','</DIV>'),"\n",parent::unhtmlentities($item['content:encoded'])));
 				$echoer("<description><![CDATA[".$description." ]]></description>\n");
-				$echoer("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['content:encoded']),'CDATA')." ]]></content:encoded>\n");
+				$echoer("<content:encoded><![CDATA[ ".mYLR_ContentEncoded(parent::unhtmlentities($item['content:encoded']),'CDATA',$this->cp)." ]]></content:encoded>\n");
 				}
 			
 			// Re-use media:content for enclosure if available
@@ -317,12 +320,12 @@ class mYLR2RSS extends mYLastRSS
 				{
 				foreach($item['categories'] as $category)
 					{
-					if (trim($category) != '') $echoer("<category><![CDATA[".htmlspecialchars($category)."]]></category>\n");
+					if (trim($category) != '') $echoer("<category><![CDATA[".mYLR_ContentEncoded($category,'CDATA',$this->cp)."]]></category>\n");
 					}
 				}
 			else if (isset($item['category']))
 				{
-				if (trim($item['category']) != '') $echoer("<category><![CDATA[".htmlspecialchars($item['category'])."]]></category>\n");
+				if (trim($item['category']) != '') $echoer("<category><![CDATA[".mYLR_ContentEncoded($item['category'],'CDATA',$this->cp)."]]></category>\n");
 				}
 			
 			if (isset($item['comments']))
@@ -351,7 +354,7 @@ class mYLR2RSS extends mYLastRSS
 					{
 					if (strpos($item['source_url'],'?') !== FALSE)
 						{
-						$echoer("<source><![CDATA[".parent::unhtmlentities($item['source'])."]]></source>\n"); 
+						$echoer("<source url=\"".mYLR_URLentities($item['source_url'])."\"><![CDATA[".parent::unhtmlentities($item['source'])."]]></source>\n"); 
 						}
 					else
 						{

@@ -4,64 +4,34 @@
 			"path": "mylastrss/mylastrss.class.php",
 			"bookmarks": [
 				{
-					"line": 184,
+					"line": 1328,
 					"column": 0,
-					"label": "todo if php 5 or with cp"
+					"label": "todo: get charset from HTTP response header"
 				},
 				{
-					"line": 1113,
-					"column": 0,
-					"label": "any iso-8859-x"
-				},
-				{
-					"line": 3188,
+					"line": 3240,
 					"column": 0,
 					"label": "todo support timeout option"
-				},
-				{
-					"line": 3256,
-					"column": 0,
-					"label": "use property var"
-				},
-				{
-					"line": 3358,
-					"column": 0,
-					"label": "use property var"
-				},
-				{
-					"line": 3482,
-					"column": 0,
-					"label": "use property var"
-				},
-				{
-					"line": 3639,
-					"column": 0,
-					"label": "todo with encoding"
 				}
 			]
 		},
 		{
-			"path": "mylastrss/misc/mylr2rss/mylr2rss.class.php",
+			"path": "tests/AbstractMylr2RssTestCase.php",
 			"bookmarks": [
 				{
-					"line": 119,
+					"line": 134,
 					"column": 0,
-					"label": "with encoding"
-				},
+					"label": "todo use mYLastRSS instance"
+				}
+			]
+		},
+		{
+			"path": "tests/LegacyMylr2RssOnlineTest.php",
+			"bookmarks": [
 				{
-					"line": 138,
+					"line": 19,
 					"column": 0,
-					"label": "with encoding"
-				},
-				{
-					"line": 319,
-					"column": 0,
-					"label": "with encoding"
-				},
-				{
-					"line": 324,
-					"column": 0,
-					"label": "with encoding"
+					"label": "bug testGetOutputSaved with some kidx rules"
 				}
 			]
 		}

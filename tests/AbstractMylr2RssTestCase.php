@@ -50,11 +50,17 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
         return implode(DIRECTORY_SEPARATOR, [$this->getTempDirectoryPath(), str_replace('\\', '-', static::class) . '-Output.xml']);
     }
 
+    private function getErrorsLogFilePath()
+    {
+        return implode(DIRECTORY_SEPARATOR, [$this->getTempDirectoryPath(), str_replace('\\', '-', static::class) . '-Errors.log']);
+    }
+
     protected function createClassInstance()
     {
         $className = $this->getClassName();
         $instance                        = new $className();
         $instance->cache_dir             = $this->getTestCachePath();
+        $instance->feed_url 			 = 'https://github.com/oliezekat/mYLastRSS/releases.atom';
         $instance->feed_title            = static::class . ' - Output';
         $instance->feed_link             = 'https://github.com/oliezekat/mYLastRSS';
         return $instance;
@@ -69,6 +75,13 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
     {
         $instance = $this->createClassInstance();
         $result = $instance->Get($sources);
+        if (count($instance->_LAST_ERROR_MESSAGES) > 0) {
+            $logFilePath = $this->getErrorsLogFilePath();
+            file_put_contents(
+                $logFilePath,
+                implode(PHP_EOL, $instance->_LAST_ERROR_MESSAGES)
+            );
+        }
         $this->assertTrue(is_array($result), 'Result is array');
         $this->assertArrayHasKey('items', $result, 'Result has "items" key');
         $this->assertTrue(is_array($result['items']), 'Result has array of items');

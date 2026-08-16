@@ -36,3 +36,4 @@ if (is_array($result) && isset($result['items']) && is_array($result['items'])) 
  * [mYLastRSS project on *GitHub*](https://github.com/oliezekat/mYLastRSS) since 2026.
  * [mYLastRSS project on *SourceForge*](https://sourceforge.net/projects/mylastrss/files/) : credits, licence, and releases between 2006 and 2014.
  * [RSS Advisory Board](https://www.rssboard.org/)
+ * [W3C Feed Validation Service](https://validator.w3.org/feed/) for RSS, RDF, and Atom

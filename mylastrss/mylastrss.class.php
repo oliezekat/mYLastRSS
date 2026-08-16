@@ -113,7 +113,9 @@ class mYLastRSS
 	// To support Media RSS
 	var $enable_MediaRSS = TRUE; // Deprecated
 	var $_MRSS_CONTENT_MIMES_TYPES 	= array('image/avif','image/webp','image/gif','image/jpeg','image/pjpeg','image/png','audio/mpeg','video/jpeg','video/mp4','video/quicktime','video/x-flv','application/x-shockwave-flash','video/x-msvideo','video/3gpp');
-		
+	var $_ANSI_ENCODING = 'ISO-8859-15';
+	var $_ANSI_ENCODINGS = array('ISO-8859-1', 'ISO8859-1', 'ISO-8859-15', 'ISO8859-15', 'CP1252', 'WINDOWS-1252', '1252');
+
 	// Internal global vars
 	var $_USE_SEVERAL_SOURCES 	= FALSE;
 	var $_STARTED_INDEX 		= 0;
@@ -176,99 +178,148 @@ class mYLastRSS
         $this->_GLOBAL_XMLNS = $MYLR_XMLNS;
         }
             
+	function _getEntitiesTranslations()
+		{
+		// Get HTML entities table
+		$nbAllowedArgs = (new ReflectionFunction('get_html_translation_table'))->getNumberOfParameters();
+		$args = array(HTML_ENTITIES, ENT_QUOTES);
+		if ($nbAllowedArgs <= 2) {
+			// PHP 5.6 issue
+			$transTableEncoding = $this->_ANSI_ENCODING; // look like not depends default_charset
+		} else {
+			if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
+				{
+				$transTableEncoding = $this->_ANSI_ENCODING;
+				}
+			else 
+				{
+				$transTableEncoding = $this->cp;
+				}
+			$args[] = $transTableEncoding;
+		}
+		$transTable = call_user_func_array('get_html_translation_table', $args);
+		$map = [];
+		foreach($transTable as $value => $entity)
+			{
+			if (empty($entity)) continue;
+			if (strtoupper($this->cp) !== strtoupper($transTableEncoding))
+				{
+				if ((strtoupper($this->cp) === 'UTF-8') && (in_array(strtoupper($transTableEncoding), $this->_ANSI_ENCODINGS)))
+					{
+					$value = $this->encodeIso8859ToUtf8($value);
+					}
+				else if ((in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS)) && ($transTableEncoding === $this->_ANSI_ENCODING))
+					{
+					// uses $value as is
+					}
+				else if (function_exists('mb_convert_encoding'))
+					{
+					$value = mb_convert_encoding($value, $this->cp, $transTableEncoding);
+					}
+				else
+					{
+					// MBString extension require
+					break;
+					}
+				}
+			$map[$entity] = $value;
+			}
+		return $map;
+        }
+            
 	function _InitEntitiesArray()
 		{
 		if ((is_array($this->_HTML_ENTITIES_TRANS) === FALSE) OR (count($this->_HTML_ENTITIES_TRANS) === 0))
 			{
 			// Init _HTML_ENTITIES_TRANS array for unhtmlentities()
-			// Get HTML entities table
-			$this->_HTML_ENTITIES_TRANS = get_html_translation_table (HTML_ENTITIES, ENT_QUOTES, 'ISO-8859-15'); // if default_charset is UTF-8
-			// Flip keys<==>values
-			$this->_HTML_ENTITIES_TRANS = array_flip ($this->_HTML_ENTITIES_TRANS);
+			$this->_HTML_ENTITIES_TRANS = $this->_getEntitiesTranslations();
 			
-			if (strtoupper($this->cp) == 'UTF-8')
+			// Add support for numeric entities which missing in HTML_ENTITIES
+			for ($i = 32; $i < 255; $i++)
 				{
-				foreach($this->_HTML_ENTITIES_TRANS as $entity => $value)
+				if (strtoupper($this->cp) === 'UTF-8')
 					{
-					$this->_HTML_ENTITIES_TRANS[$entity] = $this->encodeIso8859ToUtf8($value);
+					$value = $this->encodeIso8859ToUtf8(chr($i));
 					}
+				else if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
+					{
+					$value = chr($i);
+					}
+				else 
+					{
+					break;
+					}
+				$entity = "&#".$i.";";
+				$this->_HTML_ENTITIES_TRANS[$entity]	 = $value;
+				$entity = "&#0".$i.";";
+				if ($i < 100) 
+					{
+					$this->_HTML_ENTITIES_TRANS[$entity] = $value;
+					}
+				// coComment entities
+				$entity = "&#x".strtoupper(dechex($i)).";";
+				$this->_HTML_ENTITIES_TRANS[$entity]	 = $value;
+				$entity = "&#x".strtolower(dechex($i)).";";
+				$this->_HTML_ENTITIES_TRANS[$entity]	 = $value;
 				}
-			
+
 			// Add support for entities which missing in HTML_ENTITIES
-			$this->_HTML_ENTITIES_TRANS += array("&apos;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&quot;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&lt;" => '<');
-			$this->_HTML_ENTITIES_TRANS += array("&gt;" => '>');
-			$this->_HTML_ENTITIES_TRANS += array("&amp;" => '&');
-			$this->_HTML_ENTITIES_TRANS += array("&mdash;" => '-');
-			$this->_HTML_ENTITIES_TRANS += array("&ndash;" => '-');
-			$this->_HTML_ENTITIES_TRANS += array("&bull;" => '-');
-			$this->_HTML_ENTITIES_TRANS["&nbsp;"] = ' ';
-			$this->_HTML_ENTITIES_TRANS["&oelig;"] = 'oe';
-			$this->_HTML_ENTITIES_TRANS["&#x153;"] = 'oe';
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x202F;" => " ");
-			$this->_HTML_ENTITIES_TRANS["&hellip;"] = '...';
-			// Entities from OpenOffice
-			$this->_HTML_ENTITIES_TRANS += array("&rsquo;" => "'"); 
-			$this->_HTML_ENTITIES_TRANS += array("&lsquo;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&lrsquo;" => "'");
-			// add &ldquo; &rdquo; &lsquo; &rsquo; 
-			// Entities from Delicious
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2013;" => "-");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2014;" => "-");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2019;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x201C;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x201D;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x2026;" => "...");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#x203A;" => ">");
-			// Entities from WordPress
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8211;" => "-");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8216;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8217;" => "'");
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8220;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8221;" => '"');
-			$this->_HTML_ENTITIES_TRANS += array("&"."#8230;" => '...');
-			// From Fanfou
-			$this->_HTML_ENTITIES_TRANS += array("&"."#65306;" => ':');
-			
-			if (strtoupper($this->cp) == 'UTF-8')
+			if (strtoupper($this->cp) === 'UTF-8')
 				{
-				// Add support for numeric entities which missing in HTML_ENTITIES
-				for ($i = 32;$i < 255;$i++)
-					{
-					$this->_HTML_ENTITIES_TRANS += array("&#".$i.";" => $this->encodeIso8859ToUtf8(chr($i)));
-					if ($i < 100) $this->_HTML_ENTITIES_TRANS += array("&#0".$i.";" => $this->encodeIso8859ToUtf8(chr($i)));
-					// coComment entities
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtoupper(dechex($i)).";" => $this->encodeIso8859ToUtf8(chr($i)));
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtolower(dechex($i)).";" => $this->encodeIso8859ToUtf8(chr($i)));
-					}
+				$this->_HTML_ENTITIES_TRANS["&laquo;"]   = $this->_HTML_ENTITIES_TRANS["&#171;"]; // Entities from WordPress
+				$this->_HTML_ENTITIES_TRANS["&raquo;"]   = $this->_HTML_ENTITIES_TRANS["&#187;"]; // Entities from WordPress
 				}
-			else
+			else if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
 				{
-				// Add support for numeric entities which missing in HTML_ENTITIES
-				for ($i = 32;$i < 255;$i++)
-					{
-					$this->_HTML_ENTITIES_TRANS += array("&#".$i.";" => chr($i));
-					if ($i < 100) $this->_HTML_ENTITIES_TRANS += array("&#0".$i.";" => chr($i));
-					// coComment entities
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtoupper(dechex($i)).";" => chr($i));
-					$this->_HTML_ENTITIES_TRANS += array("&#x".strtolower(dechex($i)).";" => chr($i));
-					}
-					
 				$this->_HTML_ENTITIES_TRANS['&szlig;']	 = 'ß';
-				}
-			if (in_array(strtolower($this->cp),array('iso-8859-1','windows-1252')))
-				{
 				$this->_HTML_ENTITIES_TRANS["&euro;"]	 = '€';
                 $this->_HTML_ENTITIES_TRANS["&copy;"]	 = '©';
+				$this->_HTML_ENTITIES_TRANS["&laquo;"]   = '«'; // Entities from WordPress
+				$this->_HTML_ENTITIES_TRANS["&raquo;"]   = '»'; // Entities from WordPress
 				}
-			$this->_HTML_ENTITIES_TRANS["&#xa0;"]	 = ' ';
-			$this->_HTML_ENTITIES_TRANS["&#038;"]	 = '&';
-			$this->_HTML_ENTITIES_TRANS["&#39;"]	 = "'";
-			$this->_HTML_ENTITIES_TRANS["&#34;"]	 = '"';
-			$this->_HTML_ENTITIES_TRANS["&#339;"]	 = 'oe';
+			/* spaces */
+			$this->_HTML_ENTITIES_TRANS["&nbsp;"]	 = ' ';
+			$this->_HTML_ENTITIES_TRANS["&#xa0;"]	 = ' '; // espace fine insecable
+			$this->_HTML_ENTITIES_TRANS["&#160;"]	 = ' '; // espace fine insecable
+			$this->_HTML_ENTITIES_TRANS["&#x202F;"]  = ' ';
 			$this->_HTML_ENTITIES_TRANS["&#xA;"]	 = PHP_EOL;
+			/* simple quotes */
+			$this->_HTML_ENTITIES_TRANS["&apos;"]	= "'";
+			$this->_HTML_ENTITIES_TRANS["&rsquo;"]	= "'"; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&lsquo;"]	= "'"; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&lrsquo;"]	= "'"; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&#x2019;"]	= "'"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#8216;"]	= "'"; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#8217;"]	= "'"; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#39;"]	= "'";
+			/* double quotes */
+			$this->_HTML_ENTITIES_TRANS["&quot;"]    = '"';
+			$this->_HTML_ENTITIES_TRANS["&#x201D;"]  = '"'; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#x201C;"]  = '"'; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#8220;"]   = '"'; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#8221;"]   = '"'; // Entities from WordPress
 			$this->_HTML_ENTITIES_TRANS["&#34;"]	 = '"';
+			$this->_HTML_ENTITIES_TRANS["&ldquo;"]	 = '"'; // Entities from OpenOffice
+			$this->_HTML_ENTITIES_TRANS["&rdquo;"]	 = '"'; // Entities from OpenOffice
+			/* misc */
+			$this->_HTML_ENTITIES_TRANS["&#038;"]	 = '&';
+			$this->_HTML_ENTITIES_TRANS["&amp;"]	 = '&';
+			$this->_HTML_ENTITIES_TRANS["&#339;"]	 = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&oelig;"]	 = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&#x153;"]	 = 'oe';
+			$this->_HTML_ENTITIES_TRANS["&hellip;"]  = '...';
+			$this->_HTML_ENTITIES_TRANS["&#8230;"]	 = '...'; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#x2026;"]	 = "..."; // Entities from Delicious		
+			$this->_HTML_ENTITIES_TRANS["&lt;"]		 = '<';
+			$this->_HTML_ENTITIES_TRANS["&gt;"]		 = '>';
+			$this->_HTML_ENTITIES_TRANS["&#x203A;"]	 = ">"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&mdash;"]	 = '-';
+			$this->_HTML_ENTITIES_TRANS["&ndash;"]	 = '-';
+			$this->_HTML_ENTITIES_TRANS["&bull;"]	 = '-';
+			$this->_HTML_ENTITIES_TRANS["&#x2013;"]	 = "-"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#x2014;"]	 = "-"; // Entities from Delicious
+			$this->_HTML_ENTITIES_TRANS["&#8211;"]	 = "-"; // Entities from WordPress
+			$this->_HTML_ENTITIES_TRANS["&#65306;"]	 = ':'; // From Fanfou
 			}
 		}
 		
@@ -472,13 +523,14 @@ class mYLastRSS
 		if ($strict)
 			{
 			$string = str_replace(array('&amp;#038;','&amp;#38;','&amp;','&#x26;','&#38;','&#038;'),'&',$string);
-            $string = str_replace("&lt;&lt;",'«',$string);
-            $string = str_replace("&gt;&gt;",'»',$string);
+            $string = str_replace("&lt;&lt;",'&laquo;',$string);
+            $string = str_replace("&gt;&gt;",'&raquo;',$string);
 			}
 		
 		// Replace entities by values
 		$string = strtr ($string, $this->_HTML_ENTITIES_TRANS);
-		
+		/*
+		probably wrong
 		if (strtoupper($this->cp) == 'UTF-8')
 			{
 			$string = preg_replace_callback(
@@ -489,6 +541,7 @@ class mYLastRSS
 				$string
 				);
 			}
+		*/
 		return $string;
 		}
 
@@ -992,10 +1045,10 @@ class mYLastRSS
 	function encodeIso8859ToUtf8($string = '')
 		{
 			if (function_exists('mb_convert_encoding')) {
-				return mb_convert_encoding($string, 'UTF-8', 'ISO-8859-15');
+				return mb_convert_encoding($string, 'UTF-8', $this->_ANSI_ENCODING);
 			}
 			if (function_exists('iconv')) {
-				return iconv('ISO-8859-15', 'UTF-8', $string);
+				return iconv($this->_ANSI_ENCODING, 'UTF-8', $string);
 			}
 			if (function_exists('utf8_encode')) {
 				return utf8_encode($string);
@@ -1022,9 +1075,10 @@ class mYLastRSS
 		// If code page is set convert character encoding to required
 		if (strtoupper($this->cp) == 'UTF-8')
 			{
-			if (in_array(strtolower($strCP),array('iso-8859-1','windows-1252')))
+			if (in_array(strtoupper($strCP), $this->_ANSI_ENCODINGS))
 				{
-				$result=str_replace('€','&'.'euro;',$result);
+				$result=str_replace('€','&euro;',$result);
+				$result=str_replace('ß','&szlig;',$result);
 				$result = $this->encodeIso8859ToUtf8($result);
 				}
 			$result=str_replace(array('â€™','â€˜'),"'",$result);
@@ -1041,7 +1095,6 @@ class mYLastRSS
 				if ($strCP == '')
 					{
 					$this->rsscp = $strCP = 'auto';
-					$this->_LAST_ERROR_MESSAGES[] = "mb_convert_encoding() not allow blank value encoding";
 					}
 					
 				if (in_array(strtolower($strCP),array('auto','utf-8')))
@@ -1088,8 +1141,8 @@ class mYLastRSS
                     $result=str_replace('Ã®','&icirc;',$result); // î
 					$result=str_replace('iÌˆ','&iuml;',$result); //i trema minuscule
                     $result=str_replace('iÌ‚','&icirc;',$result); // î
-                    $result=str_replace('Ã¹','&ugrave;',$result); // ù
-                    $result=str_replace('Ã§','&ccedil;',$result); // ç
+                    //$result=str_replace('Ã¹','&ugrave;',$result); // ù
+                    //$result=str_replace('Ã§','&ccedil;',$result); // ç
 					$result=str_replace('ÄŸ','g',$result); // g turc avec diacritic
 					$result=str_replace('Ð¡','C',$result); // C majuscule bizarre
 					$result=str_replace(array('Å“'),'oe',$result);
@@ -1111,7 +1164,7 @@ class mYLastRSS
 				$result=str_replace('œ','oe',$result);
 				$result=str_replace('Œ','OE',$result);
 				
-				if (in_array(strtolower($this->cp),array('iso-8859-1','windows-1252')))
+				if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
 					{
                     $result = str_replace(' ',' ',$result); // Espace etrange, insecable en ANSI ?
 					$result=str_replace(array('´','’'),"'",$result);
@@ -1123,7 +1176,6 @@ class mYLastRSS
 				if ($strCP == 'auto')
 					{
 					$this->rsscp = $strCP = '';
-					$this->_LAST_ERROR_MESSAGES[] = "iconv() not allow 'auto' value encoding";
 					}
 				$result = @iconv($strCP, $this->cp.'//TRANSLIT', $result);
 				}
@@ -1218,11 +1270,11 @@ class mYLastRSS
 				{
 				$options['transport'] = 'WpRequests';
 				}
-			else if (class_exists('Requests'))
+			else if (class_exists('\Requests'))
 				{
 				$options['transport'] = 'Requests';
 				}
-			else if (class_exists('Snoopy'))
+			else if (class_exists('\Snoopy'))
 				{
 				$options['transport'] = 'Snoopy';
 				}
@@ -1268,6 +1320,7 @@ class mYLastRSS
 			}
 		$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
 		
+		$this->rsscp = ''; 
 		$client = new mYLR_Client($this->_getSourceClientOptions($rss_url,$source_kidx));
 		if ($this->_sourceIsURL($rss_url))
 			{
@@ -1300,7 +1353,7 @@ class mYLastRSS
 			}
 			
 		// Clean-up first lines (and prevent PHP/Apache errors displayed)
-		if (($posXML = strpos($rss_content,'<?xml')) AND ($posXML > 0))
+		if (($posXML = strpos($rss_content,'<?xml')) && ($posXML !== false) && ($posXML > 0))
 			{
 			$rss_content = trim(substr($rss_content,$posXML));
 			}
@@ -1310,6 +1363,21 @@ class mYLastRSS
 		$rss_content = trim(mYLR_TrimXmlTags($rss_content));
 		// Create header chunk to detect format
 		$rss_content_chunk = trim(strtolower(substr($rss_content,0,350)));
+		// Parse document encoding
+		if (strpos($rss_content_chunk,'<?xml') !== false)
+			{
+			preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content_chunk, $out_encoding);
+			if (isset($out_encoding[1]))
+				{ 
+				$this->rsscp = trim($out_encoding[1]); 
+				}
+			}
+		if ($this->rsscp === '')
+			{
+			$this->rsscp = $this->default_cp;
+			$this->_LAST_ERROR_MESSAGES[] = "Encoding not found from '$rss_url'";
+			}
+
 		
 		if (strlen($rss_content_chunk) == 0)
 			{
@@ -1341,8 +1409,8 @@ class mYLastRSS
 		else if ((strpos($rss_content_chunk,'<rss') !== FALSE) OR (strpos($rss_content_chunk,'<rdf') !== FALSE))
 			{
 			$result = array();
-			$result['source_url'] 	= $rss_url;
-			$result['source_kidx'] 	= $source_kidx;
+			$result['source_url']	 	 = $rss_url;
+			$result['source_kidx']	 	 = $source_kidx;
 			$feed_format = '';
 			if (strpos($rss_content_chunk,'<rss') !== FALSE)
 				{
@@ -1352,17 +1420,9 @@ class mYLastRSS
 				{
 				$feed_format = 'rdf';
 				}
-			$result['feed_format'] = $feed_format;
-			$result['generator'] = '';
-
-			// Parse document encoding
-			$result['encoding'] = $this->my_preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content);
-			// if document codepage is specified, use it
-			if ($result['encoding'] != '')
-				{ $this->rsscp = $result['encoding']; } // This is used in my_preg_match()
-			// otherwise use the default codepage
-			else
-				{ $this->rsscp = $this->default_cp; } // This is used in my_preg_match()
+			$result['feed_format']		 = $feed_format;
+			$result['generator']		 = '';
+			$result['encoding'] 		 = $this->rsscp;
 			
 			// detect extension namespaces
 			preg_match_all("'\sxmlns:(.*?)=[\'\"](.*?)[\'\"]'si", $rss_content, $nspaces_results);
@@ -2099,13 +2159,7 @@ class mYLastRSS
 		$result['source_kidx'] 		= $source_kidx;
 		$result['feed_format'] 		= 'sitemap';
 		$result['generator'] 		= '';
-        
-		// Parse document encoding
-		$result['encoding'] = $this->my_preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content);
-		if ($result['encoding'] != '')
-			{ $this->rsscp = $result['encoding']; } 
-		else
-			{ $this->rsscp = $this->default_cp; } 
+		$result['encoding'] 		= $this->rsscp;
 		
 		// detect extension namespaces
 		preg_match_all("'\sxmlns:(.*?)=[\'\"](.*?)[\'\"]'si", $rss_content, $nspaces_results);
@@ -2341,15 +2395,7 @@ class mYLastRSS
 		$result['source_kidx'] 		= $source_kidx;
 		$result['feed_format'] 		= 'atom';
 		$result['generator'] 		= '';
-
-		// Parse document encoding
-		$result['encoding'] = $this->my_preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content);
-		// if document codepage is specified, use it
-		if ($result['encoding'] != '')
-			{ $this->rsscp = $result['encoding']; } // This is used in my_preg_match()
-		// otherwise use the default codepage
-		else
-			{ $this->rsscp = $this->default_cp; } // This is used in my_preg_match()
+		$result['encoding'] 		= $this->rsscp;
 		
 		// detect extension namespaces
 		preg_match_all("'\sxmlns:(.*?)=[\'\"](.*?)[\'\"]'si", $rss_content, $nspaces_results);
@@ -3096,7 +3142,7 @@ class mYLR_Client
 			}
 		else if ($this->_transport_name === 'Requests')
 			{
-            if (class_exists('Requests') === false)
+            if (class_exists('\Requests') === false)
                 {
                 throw new \Exception("Transport class of " . $this->_transport_name . " not found.", 500);
                 }
@@ -3105,7 +3151,7 @@ class mYLR_Client
 			}
 		else if ($this->_transport_name === 'Snoopy')
 			{
-            if (class_exists('Snoopy') === false)
+            if (class_exists('\Snoopy') === false)
                 {
                 throw new \Exception("Transport class of " . $this->_transport_name . " not found.", 500);
                 }
@@ -3136,6 +3182,12 @@ class mYLR_Client
 			{
 			return '';
 			}
+		/*
+		file_put_contents(
+			sys_get_temp_dir() . DIRECTORY_SEPARATOR .md5($source).'.txt',
+			$raw_content
+		);
+		*/
 		return $raw_content;
 		}
 		
@@ -3254,7 +3306,8 @@ class mYLR_Transport_Snoopy
 	
 	function mYLR_Transport_Snoopy($options = array())
 		{
-		$this->_snoopy = new Snoopy();
+		$className = '\Snoopy';
+		$this->_snoopy = new $className();
 		$this->_snoopy->maxframes		 = 1;
 		$this->_snoopy->maxredirs		 = 4;
 		$this->_snoopy->offsiteok		 = TRUE;
@@ -3356,7 +3409,8 @@ class mYLR_Transport_Requests
 	
 	function mYLR_Transport_Requests($options = array())
 		{
-		Requests::register_autoloader();
+		$className = '\Requests';
+		$className::register_autoloader();
 		if (is_array($options))
 			{
 			if (isset($options['time-out']) AND (0 < $options['time-out']))
@@ -3375,10 +3429,11 @@ class mYLR_Transport_Requests
 	
 	function getContent($source = '')
 		{
+		$className = '\Requests';
 		$raw_content = '';
 		try
 			{
-			$this->_response = Requests::get($source, $this->_headers, $this->_options);
+			$this->_response = $className::get($source, $this->_headers, $this->_options);
 			if ($this->_response->status_code === 200)
 				{
 				$raw_content = $this->_response->body;
@@ -3480,7 +3535,8 @@ class mYLR_Transport_WpRequests
 	
 	function mYLR_Transport_WpRequests($options = array())
 		{
-		WpOrg\Requests\Autoload::register();
+		$className = 'WpOrg\Requests\Autoload';
+		$className::register();
 		if (is_array($options))
 			{
 			if (isset($options['time-out']) AND (0 < $options['time-out']))
@@ -3499,10 +3555,11 @@ class mYLR_Transport_WpRequests
 	
 	function getContent($source = '')
 		{
+		$className = 'WpOrg\Requests\Requests';
 		$raw_content = '';
 		try
 			{
-			$this->_response = WpOrg\Requests\Requests::get($source, $this->_headers, $this->_options);
+			$this->_response = $className::get($source, $this->_headers, $this->_options);
 			if ($this->_response->status_code === 200)
 				{
 				$raw_content = $this->_response->body;
@@ -3618,34 +3675,19 @@ function mYLR_CompareSourcesTime($itemA,$itemB)
 	return ($itemAtime > $itemBtime) ? 1 : -1;
 	}
 
-// ADVICE: disabled because use CDATA TAG... More usefull for non-utf8 contents
-function mYLR_ContentEncoded($string,$mode='CDATA')
+function mYLR_ContentEncoded($string, $mode = 'CDATA', $encoding = null)
 	{
-	// Replace by entities
-	//$string = str_replace('&','&amp;',$string);
-	//$string = str_replace('@','&'.'#032;',$string);
-	//$string = str_replace(array("'"),'&'.'#039;',$string);
-	//$string = str_replace(array("'","`","‘","’"),'&'.'#039;',$string);
-	//$string = str_replace(array("“","”"),'&quot;',$string);
-	//$string = str_replace("…",'...',$string);
-	
-	
-	if ($mode == 'CDATA')
+	if ($mode === 'CDATA')
 		{
 		// Do nothing
 		}
 	else
 		{
-		// convert < > " ' & 
-		$string=htmlspecialchars($string);
+		$string = htmlspecialchars($string, ENT_COMPAT | ENT_HTML401, $encoding, true);
 		}
-	
 	// Remove duplicate entities
-	$string = str_replace('&amp;#','&#',$string);
-	
-	//$string = str_replace('é','&'.'eacute;',$string);
-	//$string = str_replace('´','&'.'acute;',$string);
-	$string = str_replace('&amp;euro;','&'.'euro;',$string);
+	$string = str_replace('&amp;#', '&#', $string);
+	$string = str_replace('&amp;euro;', '&euro;', $string);
 	return $string;
 	}
 
@@ -4195,6 +4237,8 @@ function mYLR_StripLastUL($content)
 
 // By Miguel Perez
 // http://fr.php.net/manual/fr/function.chr.php#77911
+// probably wrong
+/*
 function mYLR_unichr($c)
 	{
         if ($c <= 0x7F) {
@@ -4212,4 +4256,4 @@ function mYLR_unichr($c)
             return false;
         }
 	}
-
+*/
