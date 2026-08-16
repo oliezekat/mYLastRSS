@@ -52,7 +52,7 @@
 <li>Add &lsquo;GetCache&rsquo; method (work only with sources array)</li>
 <li>Add &lsquo;kidx_rule&rsquo; property to define what use as unique item&rsquo;s id (guid, date &amp; title, or link values)</li>
 <li>Enhanced mYLR2RSS class to produce description without HTML tags</li>
-<li>Fix bugs for UTF8 output</li>
+<li>Fix bugs for UTF8 output for € symbol or &euro; HTML entity</li>
 <li>Support FeedSky like FeedBurner</li>
 <li>Support FeedsPortal links (only RSS or RDF)</li>
 <li>Support more HTML entities</li>

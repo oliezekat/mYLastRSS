@@ -8,6 +8,7 @@ class mYLR2RSS extends mYLastRSS
 	var $feed_stylesheet_type 		= '';
 	var $feed_xmlns			 		= '';
 	
+	var $feed_url 					= ''; // self link
 	var $feed_title 				= 'Unamed feed';
 	var $feed_link 					= '';
 	var $feed_description 			= '';
@@ -101,15 +102,13 @@ class mYLR2RSS extends mYLastRSS
 		
 		// Set RSS node
 		$echoer("<rss\n");
+		$echoer(" xmlns:atom=\"http://www.w3.org/2005/Atom\"\n");
 		$echoer(" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\"\n");
 		$echoer(" xmlns:wfw=\"http://wellformedweb.org/CommentAPI/\"\n");
 		$echoer(" xmlns:slash=\"http://purl.org/rss/1.0/modules/slash/\"\n");
 		$echoer(" xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n");
 		$echoer(" xmlns:dcterms=\"http://purl.org/dc/terms/\"\n");
 		if ($this->enable_MediaRSS == TRUE) $echoer(" xmlns:media=\"http://search.yahoo.com/mrss/\"\n");
-		$echoer(" xmlns:itunes=\"http://www.itunes.com/dtds/podcast-1.0.dtd\"\n");
-		$echoer(" xmlns:live=\"http://schemas.microsoft.com/live/spaces/2006/rss\"\n");
-		$echoer(" xmlns:mylr=\"http://mylastrss.sourceforge.net/\"\n");
 		$echoer($this->feed_xmlns);
 		$echoer(" version=\"2.0\">\n");
 		
@@ -129,6 +128,10 @@ class mYLR2RSS extends mYLastRSS
 			}
 		$echoer("<docs>".$this->feed_docs."</docs>\n");
 		if ($this->cache_time > 0) $echoer("<ttl>".ceil($this->cache_time / 60)."</ttl>\n\n");
+		if ($this->feed_url != '')
+			{
+			$echoer("<atom:link href=\"".mYLR_URLentities($this->feed_url)."\" rel=\"self\" type=\"application/rss+xml\" />\n");
+			}
 		
 		// Set Channel image node
 		if ($this->feed_image_url != '')
@@ -169,7 +172,7 @@ class mYLR2RSS extends mYLastRSS
 				$echoer("<title><![CDATA[".strip_tags(parent::unhtmlentities($item['title']))."]]></title>\n");
 				}
 			
-			if ($item['guid'] != '')
+			if (isset($item['guid']) && ($item['guid'] != ''))
 				{
 				if (isset($item['guid_isPermaLink']))
 					{
@@ -351,7 +354,7 @@ class mYLR2RSS extends mYLastRSS
 					{
 					if (strpos($item['source_url'],'?') !== FALSE)
 						{
-						$echoer("<source><![CDATA[".parent::unhtmlentities($item['source'])."]]></source>\n"); 
+						$echoer("<source url=\"".mYLR_URLentities($item['source_url'])."\"><![CDATA[".parent::unhtmlentities($item['source'])."]]></source>\n"); 
 						}
 					else
 						{
