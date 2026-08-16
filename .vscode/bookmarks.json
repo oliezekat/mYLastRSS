@@ -9,17 +9,17 @@
 					"label": "todo: get charset from HTTP response header"
 				},
 				{
-					"line": 3234,
+					"line": 3240,
 					"column": 0,
 					"label": "todo support timeout option"
 				},
 				{
-					"line": 3672,
+					"line": 3678,
 					"column": 0,
 					"label": "add encoding"
 				},
 				{
-					"line": 3690,
+					"line": 3696,
 					"column": 0,
 					"label": "todo with encoding"
 				}
