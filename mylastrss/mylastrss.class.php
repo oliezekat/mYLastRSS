@@ -551,6 +551,7 @@ class mYLastRSS
 
 	function GetFromSeveralSources($sourcesArray)
 		{
+		$cache_file = null;
 		if (($this->cache_feeds_dir != '') AND ($this->cache_feed_only == FALSE))
 			{
 			// If CACHE ENABLED
@@ -612,7 +613,7 @@ class mYLastRSS
 			
         if (is_array($result))
             {
-            if ($result['cached'] == 1)
+            if (($result['cached'] === 1) && isset($result['sources']) && ($cache_file !== null))
                 {
                 $this->_SOURCES = $result['sources'];
                 $result['updatedTime'] = filemtime($cache_file);
