@@ -17,7 +17,7 @@ final class LegacyMylr2RssOnlineTest extends AbstractMylr2RssTestCase
         $instance                            = parent::createClassInstance();
         $instance->cache_feeds_if_failed     = true;
         $instance->max_execution_time        = 50;
-        $instance->kidx_rule                 = 'date+title';
+        $instance->kidx_rule                 = 'date+title/link';
         return $instance;
     }
 
@@ -64,5 +64,4 @@ final class LegacyMylr2RssOnlineTest extends AbstractMylr2RssTestCase
     {
         parent::testGet($sources, $minItems);
     }
-
 }

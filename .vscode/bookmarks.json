@@ -4,34 +4,14 @@
 			"path": "mylastrss/mylastrss.class.php",
 			"bookmarks": [
 				{
-					"line": 1328,
+					"line": 1331,
 					"column": 0,
 					"label": "todo: get charset from HTTP response header"
 				},
 				{
-					"line": 3240,
+					"line": 3243,
 					"column": 0,
 					"label": "todo support timeout option"
-				}
-			]
-		},
-		{
-			"path": "tests/AbstractMylr2RssTestCase.php",
-			"bookmarks": [
-				{
-					"line": 134,
-					"column": 0,
-					"label": "todo use mYLastRSS instance"
-				}
-			]
-		},
-		{
-			"path": "tests/LegacyMylr2RssOnlineTest.php",
-			"bookmarks": [
-				{
-					"line": 19,
-					"column": 0,
-					"label": "bug testGetOutputSaved with some kidx rules"
 				}
 			]
 		}

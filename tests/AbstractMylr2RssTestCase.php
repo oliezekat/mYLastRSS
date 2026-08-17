@@ -2,6 +2,8 @@
 
 namespace Oliezekat\MyLastRss\Tests;
 
+use mYLastRSS;
+
 abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
 {
     use TempDirectoryTrait;
@@ -60,9 +62,15 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
         $className = $this->getClassName();
         $instance                        = new $className();
         $instance->cache_dir             = $this->getTestCachePath();
-        $instance->feed_url 			 = 'https://github.com/oliezekat/mYLastRSS/releases.atom';
+        $instance->feed_url              = 'https://github.com/oliezekat/mYLastRSS/releases.atom';
         $instance->feed_title            = static::class . ' - Output';
         $instance->feed_link             = 'https://github.com/oliezekat/mYLastRSS';
+        return $instance;
+    }
+
+    protected function createMylastrssInstance()
+    {
+        $instance                        = new mYLastRSS();
         return $instance;
     }
 
@@ -132,7 +140,7 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
     {
         $outputFilePath = $this->getTestOutputFilePath();
         $this->assertFileIsReadable($outputFilePath, 'Output saved file readable');
-        $instance = $this->createClassInstance();
+        $instance = $this->createMylastrssInstance();
         $result = $instance->Get($outputFilePath);
         $this->assertTrue(is_array($result), 'Result is array');
         $this->assertArrayHasKey('items', $result, 'Result has "items" key');
