@@ -60,7 +60,7 @@ abstract class AbstractMylr2RssTestCase extends AbstractClassTestCase
         $className = $this->getClassName();
         $instance                        = new $className();
         $instance->cache_dir             = $this->getTestCachePath();
-        $instance->feed_url 			 = 'https://github.com/oliezekat/mYLastRSS/releases.atom';
+        $instance->feed_url              = 'https://github.com/oliezekat/mYLastRSS/releases.atom';
         $instance->feed_title            = static::class . ' - Output';
         $instance->feed_link             = 'https://github.com/oliezekat/mYLastRSS';
         return $instance;
