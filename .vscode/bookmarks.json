@@ -4,12 +4,12 @@
 			"path": "mylastrss/mylastrss.class.php",
 			"bookmarks": [
 				{
-					"line": 1328,
+					"line": 1329,
 					"column": 0,
 					"label": "todo: get charset from HTTP response header"
 				},
 				{
-					"line": 3240,
+					"line": 3241,
 					"column": 0,
 					"label": "todo support timeout option"
 				}

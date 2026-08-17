@@ -895,6 +895,7 @@ class mYLastRSS
 				if ($cacheFileExists === true) $cacheFileTime = filemtime($cache_file);
 				}
 			
+			$errorFileExists = false;
 			if (isset($this->_SOURCES[$source_kidx]['errorFileName']))
 				{
 				$errorFilename = $this->_SOURCES[$source_kidx]['errorFileName'];
@@ -912,7 +913,7 @@ class mYLastRSS
 				if ($errorFileExists === true) $errorFileTime = filemtime($error_content_file);
 				}
 
-			if (($this->retry_delay > 0) AND ($errorFileExists == TRUE) AND ((time() - $errorFileTime) <= $this->retry_delay))
+			if (($this->retry_delay > 0) && ($errorFileExists === true) && ((time() - $errorFileTime) <= $this->retry_delay))
 				{
 				$timedif = 0;
 				}
