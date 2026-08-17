@@ -876,6 +876,7 @@ class mYLastRSS
 		// If CACHE ENABLED
 		if ($this->cache_feed_dir != '')
 			{
+			$cache_file = null;
             $cacheFileExists = false;
 			if (isset($this->_SOURCES[$source_kidx]['cachedFileName']))
 				{
@@ -924,7 +925,7 @@ class mYLastRSS
 				}
 			else $timedif = $this->cache_time;
 				
-			if (($cacheFileExists === true) && (($timedif < $this->cache_time) OR (($this->query_limit > 0) AND ($this->query_limit <= $this->_QUERY_COUNT))))
+			if (($cache_file !== null) && ($cacheFileExists === true) && (($timedif < $this->cache_time) OR (($this->query_limit > 0) AND ($this->query_limit <= $this->_QUERY_COUNT))))
 				{
 				// cached file is fresh enough, return cached array
 				$result = $this->_LoadCacheFile($cache_file);
@@ -947,7 +948,7 @@ class mYLastRSS
 						// Not enough items
 						$this->_LAST_ERROR_MESSAGES[] = 'Not enough items obtain from '.$rss_url.'';
 						
-						if (($this->use_cache_if_failed==TRUE) AND ($cacheFileExists == TRUE))
+						if (($this->use_cache_if_failed === true) && ($cache_file !== null) && ($cacheFileExists === true))
 							{
 							$result = $this->_LoadCacheFile($cache_file);
 							// set 'cached' to 1 only if cached file is correct
@@ -979,9 +980,9 @@ class mYLastRSS
 							$result['sources'][$source_kidx]['generator']	 = $result['generator'];
 							$result['sources'][$source_kidx]['namespaces']	 = $result['namespaces'];
 							}
-						if (($this->_USE_SEVERAL_SOURCES == FALSE) OR ($this->cache_all == TRUE))
+						if (($cache_file !== null) && (($this->_USE_SEVERAL_SOURCES === false) || ($this->cache_all === true)))
 							{
-							if ($this->_SaveCacheFileAs($cache_file,$result))
+							if ($this->_SaveCacheFileAs($cache_file, $result))
                                 {
                                 $errorFilename = 'mylr_content_'.$this->_URL2FileName($rss_url).'.txt';
                                 $error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
@@ -991,7 +992,7 @@ class mYLastRSS
 						}
 					}
 				// Feed not found or failed
-				else if (($this->use_cache_if_failed == TRUE) AND ($cacheFileExists == TRUE))
+				else if (($cache_file !== null) && ($this->use_cache_if_failed === true) && ($cacheFileExists === true))
 					{
 					$result = $this->_LoadCacheFile($cache_file);
 					// set 'cached' to 1 only if cached file is correct
