@@ -48,21 +48,25 @@ trait SourcesProvidersTrait
     public static function urlSourceProvider()
     {
         return [
+            'packagist.org/package' => [
+                'https://packagist.org/feeds/package.oliezekat/mylastrss.rss',
+                1,
+            ],
             'github.com/releases' => [
                 'https://github.com/oliezekat/mYLastRSS/releases.atom',
                 1,
             ],
             'oliezekat.wordpress.com/mylastrss' => [
                 'https://oliezekat.wordpress.com/tag/mylastrss/feed/rdf/',
-                4,
+                1,
             ],
             'sourceforge.net/news' => [
                 'https://sourceforge.net/p/mylastrss/news/feed.rss',
-                9,
+                1,
             ],
             'sourceforge.net/sources' => [
                 'https://sourceforge.net/projects/mylastrss/rss?path=/sources',
-                10,
+                1,
             ],
         ];
     }

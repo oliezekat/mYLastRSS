@@ -77,8 +77,8 @@ class mYLastRSS
 	var $transport				= '';			// Let blank to auto choose between fopen, WpRequests, Requests, or Snoopy.
 	var $query_limit			= 0;			// Limit number of HTTP queries to fetch feed content.
 	var $max_execution_time		= 0;			// Overall time allowed to process feeds. Set 0 to disable.
-	var $userAgent				= 'mYLastRSS';	// Used for Snoopy only
-	var $timeOut				= 0;			// Used for Snoopy only, set 0 to disable. Unused if set max_execution_time.
+	var $userAgent				= 'mYLastRSS';	// Used for Snoopy & Requests only
+	var $timeOut				= 0;			// Used for HTTP transport mode only, set 0 to disable. Replaced if set max_execution_time.
 	var $minTimeOut				= 6;			// minimal time-out per Snoopy request, used if set max_execution_time
 	var $min_items_required 	= 0; 			// Before to use last file cached
 	var $retry_delay			= 1200;			// 60 * 20 * 1 time wait before to try again. Require cache_dir.
@@ -629,7 +629,7 @@ class mYLastRSS
 		
 	function _SourceKIDX($urlPath)
 		{
-		if ((substr($urlPath, 0, 7) == 'http://') OR (substr($urlPath, 0, 8) == 'https://'))
+		if ($this->_sourceIsURL($urlPath))
 			{
 			return md5($urlPath);
 			}
@@ -1250,12 +1250,13 @@ class mYLastRSS
 		
 	function _sourceIsURL($rss_url)
 		{
-		if (substr($rss_url, 0, 7) === 'http://') return TRUE;
-		if (substr($rss_url, 0, 8) === 'https://') return TRUE;
-		return FALSE;
+		if (is_string($rss_url) === false) return false;
+		if (strtolower(substr($rss_url, 0, 8)) === 'https://') return true;
+		if (strtolower(substr($rss_url, 0, 7)) === 'http://') return true;
+		return false;
 		}
 		
-	function _getSourceClientOptions($rss_url,$source_kidx='')
+	function _getSourceClientOptions($rss_url, $source_kidx = '')
 		{
 		$options = array();
 		
@@ -1265,6 +1266,15 @@ class mYLastRSS
 			{
 			$options['time-out'] = $this->timeOut;
 			}
+		if ($this->userAgent !== '')
+			{
+			$options['user-agent'] = $this->userAgent;
+			}
+		if ($this->cache_dir != '')
+			{
+			$options['temp-dir'] = $this->cache_dir;
+			}
+			
 			
 		if ('' === trim($options['transport']))
 			{
@@ -1283,23 +1293,15 @@ class mYLastRSS
 				}
 			}
 		
-		if (FALSE === $this->_sourceIsURL($rss_url))
+		if (false === $this->_sourceIsURL($rss_url))
 			{
 			$options['transport'] = 'fopen';
 			unset($options['time-out']);
+			unset($options['user-agent']);
 			}
 			
 		$this->_SOURCES[$source_kidx]['client'] = $options;
 		
-		if ($this->userAgent !== '')
-			{
-			$options['user-agent'] = $this->userAgent;
-			}
-		if ($this->cache_dir != '')
-			{
-			$options['temp-dir'] = $this->cache_dir;
-			}
-			
 		return $options;
 		}
 		
@@ -1324,7 +1326,7 @@ class mYLastRSS
 		$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
 		
 		$this->rsscp = ''; 
-		$client = new mYLR_Client($this->_getSourceClientOptions($rss_url,$source_kidx));
+		$client = new mYLR_Client($this->_getSourceClientOptions($rss_url, $source_kidx));
 		if ($this->_sourceIsURL($rss_url))
 			{
 			$this->_QUERY_COUNT++;
@@ -3090,7 +3092,7 @@ class mYLR_Client
 	{
 	/* Private properties */
 	
-	var $_source				 = '';
+	var $_source				 = ''; // url or file path
 	var $_transport_name		 = '';
 	var $_transport_class_name	 = '';
 	var $_transport				 = null;
@@ -3180,7 +3182,7 @@ class mYLR_Client
 	function getContent($source = '')
 		{
 		$this->_source = $source;
-		$raw_content = $this->_transport->getContent($source);
+		$raw_content = $this->_transport->getContent($this->_source, ($this->isHttpSource() ? 'http' : 'file'));
 		if ($this->isTimedOut())
 			{
 			return '';
@@ -3192,6 +3194,14 @@ class mYLR_Client
 		);
 		*/
 		return $raw_content;
+		}
+		
+	function isHttpSource()
+		{
+		if (is_string($this->_source) === false) return false;
+		if (strtolower(substr($this->_source, 0, 8)) === 'https://') return true;
+		if (strtolower(substr($this->_source, 0, 7)) === 'http://') return true;
+		return false;
 		}
 		
 	function isTimedOut()
@@ -3233,6 +3243,8 @@ class mYLR_Transport_FOpen
 	/* Private properties */
 	
 	var $_last_error_message				 = '';
+	var $_time_out							 = null;
+	var $_is_timed_out						 = false;
 	
 	/* Constructor */
 	
@@ -3243,21 +3255,58 @@ class mYLR_Transport_FOpen
 	
 	function mYLR_Transport_FOpen($options = array())
 		{
+		if (is_array($options))
+			{
+			if (isset($options['time-out']) AND (0 < $options['time-out']))
+				{
+				$this->_time_out = max(6, $options['time-out']);
+				}
+			}
 		}
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		$streamOptions = [];
+		if ($mode === 'http')
+			{
+			$streamOptions = [
+				'http' => [
+					'method' => 'GET',
+					],
+				'https' => [
+					'method' => 'GET',
+					]
+				];
+			if ($this->_time_out !== null)
+				{
+				$streamOptions['http']['timeout'] = $this->_time_out;
+				$streamOptions['https']['timeout'] = $this->_time_out;
+				}
+			}
+		$streamContext = stream_context_create($streamOptions);
 		$raw_content = ''; 
-		if ($f = @fopen($source, 'rb'))
+		if ($f = @fopen($source, 'rb', false, $streamContext))
 			{ 
+			if ($this->_time_out !== null)
+				{
+				stream_set_timeout($f, $this->_time_out, 0);
+				stream_set_blocking($f, false);
+				}
             while (!feof($f))
 				{ 
                 $raw_content .= fgets($f, 4096); 
             	}
+			$streamMeta = stream_get_meta_data($f);
             fclose($f); 
-			}
+			if ($streamMeta['timed_out'] === true)
+				{
+				$this->_is_timed_out = true;
+				$this->_last_error_message = 'fopen() timed out';
+				return '';
+				} 
+  			}
 		else
 			{
 			$this->_last_error_message = 'Failed to fopen()';
@@ -3268,7 +3317,7 @@ class mYLR_Transport_FOpen
 		
 	function isTimedOut()
 		{
-		return FALSE;
+		return $this->_is_timed_out;
 		}
 		
 	function getStatusCode()
@@ -3335,8 +3384,9 @@ class mYLR_Transport_Snoopy
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		if ($mode !== 'http') return '';
 		$raw_content = '';
 		if (@$this->_snoopy->fetch($source))
 			{
@@ -3401,7 +3451,7 @@ class mYLR_Transport_Requests
 		);
 	var $_response					 = null;
 	var $_last_error_message		 = '';
-	var $_is_timed_out				 = FALSE;
+	var $_is_timed_out				 = false;
 		
 	/* Constructor */
 	
@@ -3430,8 +3480,9 @@ class mYLR_Transport_Requests
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		if ($mode !== 'http') return '';
 		$className = '\Requests';
 		$raw_content = '';
 		try
@@ -3556,8 +3607,9 @@ class mYLR_Transport_WpRequests
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		if ($mode !== 'http') return '';
 		$className = 'WpOrg\Requests\Requests';
 		$raw_content = '';
 		try
