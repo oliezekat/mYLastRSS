@@ -77,7 +77,7 @@ class mYLastRSS
 	var $transport				= '';			// Let blank to auto choose between fopen, WpRequests, Requests, or Snoopy.
 	var $query_limit			= 0;			// Limit number of HTTP queries to fetch feed content.
 	var $max_execution_time		= 0;			// Overall time allowed to process feeds. Set 0 to disable.
-	var $userAgent				= 'mYLastRSS';	// Used for Snoopy & Requests only
+	var $userAgent				= 'Mozilla/5.0 (compatible; mYLastRSS/1.0)';	// Used for HTTP transport mode only
 	var $timeOut				= 0;			// Used for HTTP transport mode only, set 0 to disable. Replaced if set max_execution_time.
 	var $minTimeOut				= 6;			// minimal time-out per Snoopy request, used if set max_execution_time
 	var $min_items_required 	= 0; 			// Before to use last file cached
@@ -3244,6 +3244,7 @@ class mYLR_Transport_FOpen
 	
 	var $_last_error_message				 = '';
 	var $_time_out							 = null;
+	var $_user_agent						 = null;
 	var $_is_timed_out						 = false;
 	
 	/* Constructor */
@@ -3257,9 +3258,13 @@ class mYLR_Transport_FOpen
 		{
 		if (is_array($options))
 			{
-			if (isset($options['time-out']) AND (0 < $options['time-out']))
+			if (isset($options['time-out']) && (0 < $options['time-out']))
 				{
-				$this->_time_out = max(6, $options['time-out']);
+				$this->_time_out = max(6, intval($options['time-out'], 10));
+				}
+			if (isset($options['user-agent']) && is_string($options['user-agent']) && ('' !== trim($options['user-agent'])))
+				{
+				$this->_user_agent = trim($options['user-agent']);
 				}
 			}
 		}
@@ -3281,6 +3286,11 @@ class mYLR_Transport_FOpen
 					'header'  => 'Accept-Encoding:' . "\r\n",
 					]
 				];
+			if ($this->_user_agent !== null)
+				{
+				$streamOptions['http']['user_agent'] = $this->_user_agent;
+				$streamOptions['https']['user_agent'] = $this->_user_agent;
+				}
 			if ($this->_time_out !== null)
 				{
 				$streamOptions['http']['timeout'] = $this->_time_out;
