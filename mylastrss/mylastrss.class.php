@@ -3274,9 +3274,11 @@ class mYLR_Transport_FOpen
 			$streamOptions = [
 				'http' => [
 					'method' => 'GET',
+					'header'  => 'Accept-Encoding:' . "\r\n",
 					],
 				'https' => [
 					'method' => 'GET',
+					'header'  => 'Accept-Encoding:' . "\r\n",
 					]
 				];
 			if ($this->_time_out !== null)
