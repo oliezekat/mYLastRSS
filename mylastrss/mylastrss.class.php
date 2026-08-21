@@ -1369,20 +1369,23 @@ class mYLastRSS
 		// Create header chunk to detect format
 		$rss_content_chunk = trim(strtolower(substr($rss_content,0,350)));
 		// Parse document encoding
-		if (strpos($rss_content_chunk,'<?xml') !== false)
-			{
-			preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content_chunk, $out_encoding);
-			if (isset($out_encoding[1]))
-				{ 
-				$this->rsscp = trim($out_encoding[1]); 
-				}
-			}
+		$this->rsscp = $client->getCharset(); 
 		if ($this->rsscp === '')
 			{
-			$this->rsscp = $this->default_cp;
-			$this->_LAST_ERROR_MESSAGES[] = "Encoding not found from '$rss_url'";
+			if (strpos($rss_content_chunk,'<?xml') !== false)
+				{
+				preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content_chunk, $out_encoding);
+				if (isset($out_encoding[1]))
+					{ 
+					$this->rsscp = trim($out_encoding[1]); 
+					}
+				}
+			if ($this->rsscp === '')
+				{
+				$this->rsscp = $this->default_cp;
+				$this->_LAST_ERROR_MESSAGES[] = "Encoding not found from '$rss_url'";
+				}
 			}
-
 		
 		if (strlen($rss_content_chunk) == 0)
 			{
@@ -3218,6 +3221,21 @@ class mYLR_Client
 		return intval($this->_transport->getStatusCode(),10);
 		}
 		
+	function getContentType()
+		{
+        return $this->_transport->getContentType();
+		}
+		
+	function getCharset()
+		{
+		$contentType = $this->getContentType();
+		if ($contentType === '') return '';
+		$contentType = str_ireplace(['; charset=', ';charset='], ';charset=', $contentType);
+		$contentTypeParts = explode(';charset=', $contentType);
+		if (count($contentTypeParts) < 2) return '';
+		return trim($contentTypeParts[1]);
+		}
+		
 	function getLastErrorMessage()
 		{
 		return $this->_transport->getLastErrorMessage();
@@ -3246,6 +3264,7 @@ class mYLR_Transport_FOpen
 	var $_time_out							 = null;
 	var $_user_agent						 = null;
 	var $_is_timed_out						 = false;
+	var $_content_type						 = '';
 	
 	/* Constructor */
 	
@@ -3304,7 +3323,6 @@ class mYLR_Transport_FOpen
 			if ($this->_time_out !== null)
 				{
 				stream_set_timeout($f, $this->_time_out, 0);
-				stream_set_blocking($f, false);
 				}
             while (!feof($f))
 				{ 
@@ -3318,6 +3336,10 @@ class mYLR_Transport_FOpen
 				$this->_last_error_message = 'fopen() timed out';
 				return '';
 				} 
+			if (($streamMeta['wrapper_type'] === 'http') && isset($streamMeta['wrapper_data']) && is_array($streamMeta['wrapper_data']))
+				{
+				$this->parseStreamHttpData($streamMeta['wrapper_data']);
+				} 
   			}
 		else
 			{
@@ -3325,6 +3347,18 @@ class mYLR_Transport_FOpen
 			return '';
 			}
 		return $raw_content;
+		}
+		
+	function parseStreamHttpData($data)
+		{
+		foreach($data as $line)
+			{
+			if (stripos($line, 'Content-Type:') === 0)
+				{
+				$this->_content_type = trim(substr($line, 13));
+				continue;
+				}
+			}
 		}
 		
 	function isTimedOut()
@@ -3335,6 +3369,11 @@ class mYLR_Transport_FOpen
 	function getStatusCode()
 		{
 		return 0;
+		}
+		
+	function getContentType()
+		{
+        return $this->_content_type;
 		}
 		
 	function getLastErrorMessage()
@@ -3427,6 +3466,11 @@ class mYLR_Transport_Snoopy
 	function getStatusCode()
 		{
 		return $this->_snoopy->response_code;
+		}
+		
+	function getContentType()
+		{
+        return '';
 		}
 		
 	function getLastErrorMessage()
@@ -3531,6 +3575,12 @@ class mYLR_Transport_Requests
 		{
         if ($this->_response === null) return 0;
 		return $this->_response->status_code;
+		}
+		
+	function getContentType()
+		{
+        if ($this->_response === null) return '';
+		return $this->_response->headers['content-type'];
 		}
 		
 	function getLastErrorMessage()
@@ -3658,6 +3708,12 @@ class mYLR_Transport_WpRequests
 		{
         if ($this->_response === null) return 0;
 		return $this->_response->status_code;
+		}
+		
+	function getContentType()
+		{
+        if ($this->_response === null) return '';
+		return $this->_response->headers['content-type'];
 		}
 		
 	function getLastErrorMessage()
