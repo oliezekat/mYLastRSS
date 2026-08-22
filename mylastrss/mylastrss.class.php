@@ -3580,6 +3580,7 @@ class mYLR_Transport_Requests
 	function getContentType()
 		{
         if ($this->_response === null) return '';
+        if ($this->_response->headers['content-type'] === null) return '';
 		return $this->_response->headers['content-type'];
 		}
 		
@@ -3713,6 +3714,7 @@ class mYLR_Transport_WpRequests
 	function getContentType()
 		{
         if ($this->_response === null) return '';
+        if ($this->_response->headers['content-type'] === null) return '';
 		return $this->_response->headers['content-type'];
 		}
 		
