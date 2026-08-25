@@ -126,7 +126,7 @@ class mYLastRSS
 	var $_FWRITE_FAIL_COUNT		= 0;		// Amount of write/copy/move errors. Not reset between several request.
 	var $_HTML_ENTITIES_TRANS 	= array(); 	// Build into constructor method.
 	var $_LAST_ERROR_MESSAGES 	= array(); 	// Error messages (in english) which help to debug... Don't use if debugging is finished.
-	var $_EMOJIS_TRANS       	= array(); 	// Array to replace emojis (from UTF-8 content only).
+	var $_EMOJIS_TRANS       	= null; 	// Array to replace emojis (from UTF-8 content only).
     var $_GLOBAL_FORMATS        = null; // Replace previous global $MYLR_FORMATS
     var $_GLOBAL_XMLNS          = null; // Replace previous global $MYLR_XMLNS
 		
@@ -356,19 +356,32 @@ class mYLastRSS
 	
 	function _InitEmojisArray()
 		{
-		if ((is_array($this->_EMOJIS_TRANS) === FALSE) OR (count($this->_EMOJIS_TRANS) === 0))
+		if (($this->_EMOJIS_TRANS !== null) && is_array($this->_EMOJIS_TRANS)) return;
+		$emojisMap = [];
+		$emojisMapFilePath = implode(DIRECTORY_SEPARATOR, [__DIR__, 'misc', 'emojis', 'emoji-strip.php']);
+		$this->importEmojisMapFile($emojisMap, $emojisMapFilePath);
+		if (defined('MYLASTRSS_EMOJIS_PATH') && (trim(MYLASTRSS_EMOJIS_PATH) !== ''))
 			{
-            if (defined('MYLASTRSS_EMOJIS_PATH') and is_file(MYLASTRSS_EMOJIS_PATH))
-                {
-                $this->_EMOJIS_TRANS = require MYLASTRSS_EMOJIS_PATH;
-                }
-            if (is_array($this->_EMOJIS_TRANS) === FALSE)
-                {
-                $this->_EMOJIS_TRANS = array();
-                }
-            //todo emoj fin phrase avant ponctuation
+			$this->importEmojisMapFile($emojisMap, MYLASTRSS_EMOJIS_PATH);
+			}
+		$this->_EMOJIS_TRANS = $emojisMap;
+        }    
+
+    function importEmojisMapFile(&$emojisMap, $emojisMapFilePath)
+        {
+		if (is_array($emojisMap) === false) return;
+		if (is_string($emojisMapFilePath) === false) return;
+		if (trim($emojisMapFilePath) === '') return;
+		if (is_file($emojisMapFilePath) === false) return;
+		$emojis = require $emojisMapFilePath;
+		if (is_array($emojis) === false) return;
+        foreach ($emojis as $key => $value)
+			{
+            if (is_string($key) === false) continue;
+            if (is_string($value) === false) continue;
+			$emojisMap[$key] = $value;
             }
-        }       
+        }
                 
 	function _InitDirectories()
 		{
