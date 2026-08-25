@@ -124,7 +124,7 @@ class mYLastRSS
 	var $_STARTED_TIME 			= 0;
 	var $_QUERY_COUNT			= 0;
 	var $_FWRITE_FAIL_COUNT		= 0;		// Amount of write/copy/move errors. Not reset between several request.
-	var $_HTML_ENTITIES_TRANS 	= array(); 	// Build into constructor method.
+	var $_HTML_ENTITIES_TRANS 	= null; 	// Build into constructor method.
 	var $_LAST_ERROR_MESSAGES 	= array(); 	// Error messages (in english) which help to debug... Don't use if debugging is finished.
 	var $_EMOJIS_TRANS       	= null; 	// Array to replace emojis (from UTF-8 content only).
     var $_GLOBAL_FORMATS        = null; // Replace previous global $MYLR_FORMATS
@@ -411,8 +411,7 @@ class mYLastRSS
 			$this->itemtags              = array();
 			$this->_LAST_ERROR_MESSAGES  = array();
 			$this->_SOURCES              = array();
-			$this->_HTML_ENTITIES_TRANS  = array();
-			$this->_EMOJIS_TRANS         = array();
+			$this->_HTML_ENTITIES_TRANS  = null;
 			}
 		}
 	
