@@ -4,19 +4,14 @@
 			"path": "mylastrss/mylastrss.class.php",
 			"bookmarks": [
 				{
-					"line": 355,
+					"line": 356,
 					"column": 0,
 					"label": ""
 				},
 				{
-					"line": 635,
+					"line": 636,
 					"column": 0,
 					"label": "todo if realpath = false"
-				},
-				{
-					"line": 1068,
-					"column": 0,
-					"label": ""
 				}
 			]
 		}

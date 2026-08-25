@@ -51,6 +51,7 @@ class mYLastRSS
 	var $items_limit 			= 0;
 	var $items_limit_per_source = 0;
 	var $stripHTML 				= FALSE;
+	var $stripEmojis			= false;		// Strip emojis if feed UTF-8 encoded and output as UTF-8. Always strip if output not-UTF-8
 	var $date_format 			= '';
 	var $useOrigLink			= FALSE;		// Search original link while detect tracking URL (of FeedBurner, FeedPortal, etc)
 	var $kidx_rule 				= 'guid'; 		// Which use as unique item's id ; guid, link, date+title, link/date+title, or date+title/link
@@ -1066,9 +1067,12 @@ class mYLastRSS
         
 		if (strtolower($strCP) === 'utf-8')
             {
-            // replace emojis if utf-8
-            $this->_InitEmojisArray();
-       		$result = strtr($result, $this->_EMOJIS_TRANS);
+			if ((strtoupper($this->cp) !== 'UTF-8') || ($this->stripEmojis === true))
+				{
+				// replace emojis if utf-8
+				$this->_InitEmojisArray();
+				$result = strtr($result, $this->_EMOJIS_TRANS);
+				}
 			$result=str_replace('©','&copy;',$result);
 			$result=str_replace('​','',$result); // ZWSP U+200B espace sans chasse
 			$result=str_replace('È','&Egrave;',$result); // � ou E avec diacritic &#768;
