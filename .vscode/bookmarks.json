@@ -7,11 +7,6 @@
 					"line": 635,
 					"column": 0,
 					"label": "todo if realpath = false"
-				},
-				{
-					"line": 1333,
-					"column": 0,
-					"label": "todo: get charset from HTTP response header"
 				}
 			]
 		}
