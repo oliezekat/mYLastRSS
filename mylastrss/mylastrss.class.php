@@ -272,6 +272,8 @@ class mYLastRSS
 				}
 			else if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
 				{
+				$this->_HTML_ENTITIES_TRANS['&Eacute;']	 = 'É';
+				$this->_HTML_ENTITIES_TRANS['&eacute;']	 = 'é';
 				$this->_HTML_ENTITIES_TRANS['&szlig;']	 = 'ß';
 				$this->_HTML_ENTITIES_TRANS["&euro;"]	 = '€';
                 $this->_HTML_ENTITIES_TRANS["&copy;"]	 = '©';
@@ -1174,6 +1176,8 @@ class mYLastRSS
                     $result=str_replace(' â€ª',' ',$result); //espace suivie LEFT-TO-RIGHT EMBEDDING
 					$result=str_replace(' â€',' ',$result); //espace suivie liant sans chasse
 					$result=str_replace(' â ',' ',$result); //espace fine ?
+					$result=str_replace('eÌ','&eacute;',$result); // é
+					$result=str_replace('EÌ','&Eacute;',$result); // É
 					}
 				
 				$result = @mb_convert_encoding($result, $this->cp, $strCP);
