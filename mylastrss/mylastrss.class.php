@@ -1068,9 +1068,8 @@ class mYLastRSS
             {
             // replace emojis if utf-8
             $this->_InitEmojisArray();
-			$result=str_replace('©','&copy;',$result);
-			$result=str_replace('▪︎','-',$result); // emoji petit carre noir
        		$result = strtr($result, $this->_EMOJIS_TRANS);
+			$result=str_replace('©','&copy;',$result);
 			$result=str_replace('​','',$result); // ZWSP U+200B espace sans chasse
 			$result=str_replace('È','&Egrave;',$result); // � ou E avec diacritic &#768;
             }
@@ -1118,7 +1117,6 @@ class mYLastRSS
 					$result=str_replace('̶','-',$result);
 					$result=str_replace('‑','-',$result);
 					$result=str_replace('…','...',$result);
-					$result=str_replace('”','-',$result);
 					$result=str_replace('：',': ',$result);
 					$result=str_replace('｜',' | ',$result);
 					$result=str_replace('⸻','---',$result);

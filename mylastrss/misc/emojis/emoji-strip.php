@@ -23,6 +23,7 @@ return [
     /* ajout replace symbol */
     ' ' => ' ', /* insecable */
     '●' => '-', /* bullet plein */
+    '▪︎' => '-', /* Petit Carré Noir */
     '․' => '.', /* point */
     /* ajout replace chiffre */
     '𝟎' => '0',
