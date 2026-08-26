@@ -2187,6 +2187,11 @@ class mYLastRSS
 		$result['source_kidx'] 		= $source_kidx;
 		$result['feed_format'] 		= 'sitemap';
 		$result['generator'] 		= '';
+        if ($this->rsscp === '')
+            {
+            // Sitemap protocole say "file itself must be UTF-8 encoded".
+            $this->rsscp = 'UTF-8';
+            }
 		$result['encoding'] 		= $this->rsscp;
 		
 		// detect extension namespaces
