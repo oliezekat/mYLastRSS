@@ -362,7 +362,7 @@ class mYLastRSS
 		$emojisMap = [];
 		$emojisMapFilePath = implode(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'symfony-emoji-strip.php']);
 		$this->importEmojisMapFile($emojisMap, $emojisMapFilePath);
-		$emojisMapFilePath = implode(DIRECTORY_SEPARATOR, [__DIR__, 'misc', 'emojis', 'emoji-strip.php']);
+		$emojisMapFilePath = implode(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'misc-emoji-fix.php']);
 		$this->importEmojisMapFile($emojisMap, $emojisMapFilePath);
 		if (defined('MYLASTRSS_EMOJIS_PATH') && (trim(MYLASTRSS_EMOJIS_PATH) !== ''))
 			{
