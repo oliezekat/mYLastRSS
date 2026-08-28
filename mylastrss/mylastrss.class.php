@@ -1180,6 +1180,8 @@ class mYLastRSS
 					$result=str_replace(' ❠',' ',$result); //espace fine ?
 					$result=str_replace('é','&eacute;',$result); // �
 					$result=str_replace('É','&Eacute;',$result); // �
+					$result=str_replace('ł','l',$result); 
+					$result=str_replace('ę','e',$result); 
 					}
 				
 				$result = @mb_convert_encoding($result, $this->cp, $strCP);
