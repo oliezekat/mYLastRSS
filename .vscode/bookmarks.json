@@ -4,14 +4,14 @@
 			"path": "mylastrss/mylastrss.class.php",
 			"bookmarks": [
 				{
-					"line": 650,
+					"line": 635,
 					"column": 0,
 					"label": "todo if realpath = false"
 				},
 				{
-					"line": 1118,
+					"line": 1069,
 					"column": 0,
-					"label": "todo move utf8 entities"
+					"label": "todo map normalize utf8"
 				}
 			]
 		},
@@ -19,12 +19,12 @@
 			"path": "mylastrss/resources/misc-emoji-fix.php",
 			"bookmarks": [
 				{
-					"line": 29,
+					"line": 28,
 					"column": 0,
 					"label": "todo split entities"
 				},
 				{
-					"line": 35,
+					"line": 34,
 					"column": 0,
 					"label": "todo split alphabet"
 				}

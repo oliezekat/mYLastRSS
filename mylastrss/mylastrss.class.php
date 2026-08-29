@@ -535,7 +535,6 @@ class mYLastRSS
 	function unhtmlentities($string,$strict=TRUE)
 		{
 		$this->_InitEntitiesArray();
-		
 		// Bad feeds had double entities for amp
 		if ($strict)
 			{
@@ -543,22 +542,8 @@ class mYLastRSS
             $string = str_replace("&lt;&lt;",'&laquo;',$string);
             $string = str_replace("&gt;&gt;",'&raquo;',$string);
 			}
-		
 		// Replace entities by values
-		$string = strtr ($string, $this->_HTML_ENTITIES_TRANS);
-		/*
-		probably wrong
-		if (strtoupper($this->cp) == 'UTF-8')
-			{
-			$string = preg_replace_callback(
-				'~&#([0-9]+);~',
-				function ($matches) {
-					return mYLR_unichr($matches[1]);
-				},
-				$string
-				);
-			}
-		*/
+		$string = strtr($string, $this->_HTML_ENTITIES_TRANS);
 		return $string;
 		}
 
@@ -1080,8 +1065,7 @@ class mYLastRSS
 		{
 		$result = $encStr;
 		$strCP = $this->rsscp;
-        
-		if (strtolower($strCP) === 'utf-8')
+		if ((strtolower($strCP) === 'utf-8') || ($strCP === '') || ($strCP === 'auto'))
             {
 			if ((strtoupper($this->cp) !== 'UTF-8') || ($this->stripEmojis === true))
 				{
@@ -1090,118 +1074,32 @@ class mYLastRSS
 				$result = strtr($result, $this->_EMOJIS_TRANS);
 				}
             }
-		
-		// If code page is set convert character encoding to required
-		if (strtoupper($this->cp) == 'UTF-8')
+		if ((strtoupper($this->cp) === 'UTF-8') && (in_array(strtoupper($strCP), $this->_ANSI_ENCODINGS)))
 			{
-			if (in_array(strtoupper($strCP), $this->_ANSI_ENCODINGS))
-				{
-				$result=str_replace('�','&euro;',$result);
-				$result=str_replace('�','&szlig;',$result);
-				$result = $this->encodeIso8859ToUtf8($result);
-				}
-			$result=str_replace(array('’','‘'),"'",$result);
-			$result=str_replace(array('“','”'),'"',$result);
-			$result=str_replace('œ','oe',$result);
-			$result=str_replace('&'.'euro;','€',$result);
-			$result=str_replace('–','-',$result);
-			$result=str_replace('…','...',$result);
+			$result=str_replace('�','&euro;',$result);
+			$result=str_replace('�','&szlig;',$result);
+			$result = $this->encodeIso8859ToUtf8($result);
+			$result=str_replace('&euro;','€',$result);
 			}
-		else if ($this->cp != '')
+		else if ($this->cp !== '')
 			{
 			if(function_exists('mb_convert_encoding'))
 				{
-				if ($strCP == '')
+				if ($strCP === '')
 					{
 					$this->rsscp = $strCP = 'auto';
 					}
-					
-				if (in_array(strtolower($strCP),array('auto','utf-8')))
-					{
-					$result=str_replace('▪︎','*',$result);
-					$result=str_replace(' ​',' ',$result); //espace fine
-                    $result=str_replace('ç','&ccedil;',$result); // �
-					$result=str_replace('À','&Agrave;',$result); // �
-                    $result=str_replace('è','&egrave;',$result); // �
-                    $result=str_replace('à','&agrave;',$result); // �
-                    $result=str_replace('ù','&ugrave;',$result); // �
-                    $result=str_replace('û','&ucirc;',$result); // �
-					$result=str_replace('–','-',$result);
-					$result=str_replace('−','-',$result);
-					$result=str_replace('̶','-',$result);
-					$result=str_replace('‑','-',$result);
-					$result=str_replace('…','...',$result);
-					$result=str_replace('：',': ',$result);
-					$result=str_replace('｜',' | ',$result);
-					$result=str_replace('⸻','---',$result);
-					$result=str_replace('﻿','',$result); // bom utf8
-					$result=str_replace(' ',' ',$result); //espace insecable ?
-					$result=str_replace(' ',' ',$result); //espace insecable ?
-					$result=str_replace('ᵉ','e',$result); // Lettre modificative minuscule E
-					$result=str_replace('ˢ','s',$result); // Lettre modificative minuscule S
-					$result=str_replace('ă','a',$result); // a avec diacritic breve
-					$result=str_replace('ș','s',$result); // s avec diacritic
-					$result=str_replace('ő','o',$result); // o double accent aigu
-					$result=str_replace('ě','e',$result); // e antiflexe
-					$result=str_replace('ļ','l',$result); // L virgule souscrite
-					$result=str_replace('ñ','n',$result); // n tilde
-					$result=str_replace('Î','&Icirc;',$result); 
-					$result=str_replace('E̝','&Eacute;',$result); // �
-                    $result=str_replace('ê','&ecirc;',$result); // �
-                    $result=str_replace('ë','&euml;',$result); // �
-                    $result=str_replace('ë','&euml;',$result); // �
-					$result=str_replace('e̝','&eacute;',$result); // �
-                    $result=str_replace('â','&acirc;',$result); // �
-                    $result=str_replace('ô','&ocirc;',$result); // �
-                    $result=str_replace('î','&icirc;',$result); // �
-					$result=str_replace('ï','&iuml;',$result); //i trema minuscule
-                    $result=str_replace('î','&icirc;',$result); // �
-                    //$result=str_replace('ù','&ugrave;',$result); // �
-                    //$result=str_replace('ç','&ccedil;',$result); // �
-					$result=str_replace('ğ','g',$result); // g turc avec diacritic
-					$result=str_replace('С','C',$result); // C majuscule bizarre
-					$result=str_replace(array('œ'),'oe',$result);
-					$result=str_replace('ʳ','r',$result); // Lettre modificative minuscule R
-					$result=str_replace('ć','c',$result); // c accent aigu
-					$result=str_replace(array(' ',' ','■'),' ',$result);
-					$result=str_replace(array('’','‘'),"'",$result);
-					$result=str_replace(array('“','”','˝'),'"',$result);
-					$result=str_replace('ĝ','c',$result); // c avec diacritic
-					$result=str_replace('ĝ','a',$result); // a avec diacritic
-					$result=str_replace('ř','r',$result); // lettre R diacrit�e d'un caron
-                    $result=str_replace(' ‪',' ',$result); //espace suivie LEFT-TO-RIGHT EMBEDDING
-					$result=str_replace(' ”',' ',$result); //espace suivie liant sans chasse
-					$result=str_replace(' ❠',' ',$result); //espace fine ?
-					$result=str_replace('ł','l',$result); 
-					$result=str_replace('ę','e',$result); 
-					}
-				
 				$result = @mb_convert_encoding($result, $this->cp, $strCP);
-				
-				$result=str_replace('�','oe',$result);
-				$result=str_replace('�','OE',$result);
-				
-				if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
-					{
-                    $result = str_replace('�',' ',$result); // Espace etrange, insecable en ANSI ?
-					$result=str_replace(array('�','�'),"'",$result);
-					$result=str_replace(array('˝'),'"',$result);
-					}
 				}
 			else if (function_exists('iconv'))
 				{
-				if ($strCP == 'auto')
+				if ($strCP === 'auto')
 					{
 					$this->rsscp = $strCP = '';
 					}
 				$result = @iconv($strCP, $this->cp.'//TRANSLIT', $result);
 				}
-			else
-				{
-				// Do nothing :o(
-				}
 			}
-		
 		return $result;
 		}
 		
@@ -4378,26 +4276,3 @@ function mYLR_StripLastUL($content)
 		}
 	return $content;
 	}
-
-// By Miguel Perez
-// http://fr.php.net/manual/fr/function.chr.php#77911
-// probably wrong
-/*
-function mYLR_unichr($c)
-	{
-        if ($c <= 0x7F) {
-            return chr($c);
-        } else if ($c <= 0x7FF) {
-            return chr(0xC0 | $c >> 6) . chr(0x80 | $c & 0x3F);
-        } else if ($c <= 0xFFFF) {
-            return chr(0xE0 | $c >> 12) . chr(0x80 | $c >> 6 & 0x3F)
-                                        . chr(0x80 | $c & 0x3F);
-        } else if ($c <= 0x10FFFF) {
-            return chr(0xF0 | $c >> 18) . chr(0x80 | $c >> 12 & 0x3F)
-                                        . chr(0x80 | $c >> 6 & 0x3F)
-                                        . chr(0x80 | $c & 0x3F);
-        } else {
-            return false;
-        }
-	}
-*/
