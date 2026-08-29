@@ -1,12 +1,11 @@
 <?php
 
 return [
-    /* ajout strip */
+    /* emoji strip */
     '⚫️' => '',
     '▷' => '', /* triangle droite */
     '→' => '',
     '⛵️' => '',
-    '​' => '', /* invisible */
     '➽' => '',
     '⚪️' => '',
     '►'  => '',
@@ -19,17 +18,26 @@ return [
     '♪' => '',
     '🙂‍↔️' => '',
     '🙂‍↔' => '',
+    /* special strip */
+    ' ‌' => ' ', /* space with ZWNJ */
+    '​' => '', /* invisible */
     '⁠' => '', /* word joiner */
-    /* ajout replace symbol */
+    /* replace symbol */
     ' ' => ' ', /* insecable */
     '●' => '-', /* bullet plein */
     '▪︎' => '-', /* Petit Carré Noir */
     '․' => '.', /* point */
-    /* ajout replace chiffre */
+    /* utf8 entities */
+    '©' => '&copy;',
+    '€' => '&euro;',
+    'é' => '&eacute;',
+    'É' => '&Eacute;',
+    'È' => '&Egrave;',
+    /* replace chiffre */
     '𝟎' => '0',
     '𝟑' => '3',
     '𝟔' => '6',
-    /* ajout replace lettre */
+    /* replace lettre */
     '𝘢' => 'a',
     '𝙖' => 'a',
     '𝐚' => 'a',

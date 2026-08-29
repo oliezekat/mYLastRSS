@@ -1089,9 +1089,6 @@ class mYLastRSS
 				$this->_InitEmojisArray();
 				$result = strtr($result, $this->_EMOJIS_TRANS);
 				}
-			$result=str_replace('©','&copy;',$result);
-			$result=str_replace('​','',$result); // ZWSP U+200B espace sans chasse
-			$result=str_replace('È','&Egrave;',$result); // � ou E avec diacritic &#768;
             }
 		
 		// If code page is set convert character encoding to required
@@ -1121,10 +1118,7 @@ class mYLastRSS
 					
 				if (in_array(strtolower($strCP),array('auto','utf-8')))
 					{
-					$result=str_replace(' ‌',' ',$result); //espace ?
-					$result=str_replace('©','&copy;',$result);
 					$result=str_replace('▪︎','*',$result);
-					$result=str_replace(array('€'),'&'.'euro;',$result);
 					$result=str_replace(' ​',' ',$result); //espace fine
                     $result=str_replace('ç','&ccedil;',$result); // �
 					$result=str_replace('À','&Agrave;',$result); // �
@@ -1178,8 +1172,6 @@ class mYLastRSS
                     $result=str_replace(' ‪',' ',$result); //espace suivie LEFT-TO-RIGHT EMBEDDING
 					$result=str_replace(' ”',' ',$result); //espace suivie liant sans chasse
 					$result=str_replace(' ❠',' ',$result); //espace fine ?
-					$result=str_replace('é','&eacute;',$result); // �
-					$result=str_replace('É','&Eacute;',$result); // �
 					$result=str_replace('ł','l',$result); 
 					$result=str_replace('ę','e',$result); 
 					}
