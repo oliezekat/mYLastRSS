@@ -2,6 +2,11 @@
 
 Simple yet powerfull PHP class to parse and merge several RSS, RDF, Atom feeds
 
+### Requirements
+
+ * PHP 5.6, 7.4, 8.1, 8.2, or 8.4
+ * Extension MBString
+
 ## Installation
 
 ```bash

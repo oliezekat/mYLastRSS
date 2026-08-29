@@ -51,6 +51,7 @@ class mYLastRSS
 	var $items_limit 			= 0;
 	var $items_limit_per_source = 0;
 	var $stripHTML 				= FALSE;
+	var $stripEmojis			= false;		// Strip emojis if feed UTF-8 encoded and output as UTF-8. Always strip if output not-UTF-8
 	var $date_format 			= '';
 	var $useOrigLink			= FALSE;		// Search original link while detect tracking URL (of FeedBurner, FeedPortal, etc)
 	var $kidx_rule 				= 'guid'; 		// Which use as unique item's id ; guid, link, date+title, link/date+title, or date+title/link
@@ -77,8 +78,8 @@ class mYLastRSS
 	var $transport				= '';			// Let blank to auto choose between fopen, WpRequests, Requests, or Snoopy.
 	var $query_limit			= 0;			// Limit number of HTTP queries to fetch feed content.
 	var $max_execution_time		= 0;			// Overall time allowed to process feeds. Set 0 to disable.
-	var $userAgent				= 'mYLastRSS';	// Used for Snoopy only
-	var $timeOut				= 0;			// Used for Snoopy only, set 0 to disable. Unused if set max_execution_time.
+	var $userAgent				= 'Mozilla/5.0 (compatible; mYLastRSS/1.0)';	// Used for HTTP transport mode only
+	var $timeOut				= 0;			// Used for HTTP transport mode only, set 0 to disable. Replaced if set max_execution_time.
 	var $minTimeOut				= 6;			// minimal time-out per Snoopy request, used if set max_execution_time
 	var $min_items_required 	= 0; 			// Before to use last file cached
 	var $retry_delay			= 1200;			// 60 * 20 * 1 time wait before to try again. Require cache_dir.
@@ -123,9 +124,9 @@ class mYLastRSS
 	var $_STARTED_TIME 			= 0;
 	var $_QUERY_COUNT			= 0;
 	var $_FWRITE_FAIL_COUNT		= 0;		// Amount of write/copy/move errors. Not reset between several request.
-	var $_HTML_ENTITIES_TRANS 	= array(); 	// Build into constructor method.
+	var $_HTML_ENTITIES_TRANS 	= null; 	// Build into constructor method.
 	var $_LAST_ERROR_MESSAGES 	= array(); 	// Error messages (in english) which help to debug... Don't use if debugging is finished.
-	var $_EMOJIS_TRANS       	= array(); 	// Array to replace emojis (from UTF-8 content only).
+	var $_EMOJIS_TRANS       	= null; 	// Array to replace emojis (from UTF-8 content only).
     var $_GLOBAL_FORMATS        = null; // Replace previous global $MYLR_FORMATS
     var $_GLOBAL_XMLNS          = null; // Replace previous global $MYLR_XMLNS
 		
@@ -271,6 +272,8 @@ class mYLastRSS
 				}
 			else if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
 				{
+				$this->_HTML_ENTITIES_TRANS['&Eacute;']	 = '�';
+				$this->_HTML_ENTITIES_TRANS['&eacute;']	 = '�';
 				$this->_HTML_ENTITIES_TRANS['&szlig;']	 = '�';
 				$this->_HTML_ENTITIES_TRANS["&euro;"]	 = '�';
                 $this->_HTML_ENTITIES_TRANS["&copy;"]	 = '�';
@@ -355,19 +358,34 @@ class mYLastRSS
 	
 	function _InitEmojisArray()
 		{
-		if ((is_array($this->_EMOJIS_TRANS) === FALSE) OR (count($this->_EMOJIS_TRANS) === 0))
+		if (($this->_EMOJIS_TRANS !== null) && is_array($this->_EMOJIS_TRANS)) return;
+		$emojisMap = [];
+		$emojisMapFilePath = implode(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'symfony-emoji-strip.php']);
+		$this->importEmojisMapFile($emojisMap, $emojisMapFilePath);
+		$emojisMapFilePath = implode(DIRECTORY_SEPARATOR, [__DIR__, 'resources', 'misc-emoji-fix.php']);
+		$this->importEmojisMapFile($emojisMap, $emojisMapFilePath);
+		if (defined('MYLASTRSS_EMOJIS_PATH') && (trim(MYLASTRSS_EMOJIS_PATH) !== ''))
 			{
-            if (defined('MYLASTRSS_EMOJIS_PATH') and is_file(MYLASTRSS_EMOJIS_PATH))
-                {
-                $this->_EMOJIS_TRANS = require MYLASTRSS_EMOJIS_PATH;
-                }
-            if (is_array($this->_EMOJIS_TRANS) === FALSE)
-                {
-                $this->_EMOJIS_TRANS = array();
-                }
-            //todo emoj fin phrase avant ponctuation
+			$this->importEmojisMapFile($emojisMap, MYLASTRSS_EMOJIS_PATH);
+			}
+		$this->_EMOJIS_TRANS = $emojisMap;
+        }    
+
+    function importEmojisMapFile(&$emojisMap, $emojisMapFilePath)
+        {
+		if (is_array($emojisMap) === false) return;
+		if (is_string($emojisMapFilePath) === false) return;
+		if (trim($emojisMapFilePath) === '') return;
+		if (is_file($emojisMapFilePath) === false) return;
+		$emojis = require $emojisMapFilePath;
+		if (is_array($emojis) === false) return;
+        foreach ($emojis as $key => $value)
+			{
+            if (is_string($key) === false) continue;
+            if (is_string($value) === false) continue;
+			$emojisMap[$key] = $value;
             }
-        }       
+        }
                 
 	function _InitDirectories()
 		{
@@ -397,8 +415,7 @@ class mYLastRSS
 			$this->itemtags              = array();
 			$this->_LAST_ERROR_MESSAGES  = array();
 			$this->_SOURCES              = array();
-			$this->_HTML_ENTITIES_TRANS  = array();
-			$this->_EMOJIS_TRANS         = array();
+			$this->_HTML_ENTITIES_TRANS  = null;
 			}
 		}
 	
@@ -518,7 +535,6 @@ class mYLastRSS
 	function unhtmlentities($string,$strict=TRUE)
 		{
 		$this->_InitEntitiesArray();
-		
 		// Bad feeds had double entities for amp
 		if ($strict)
 			{
@@ -526,22 +542,8 @@ class mYLastRSS
             $string = str_replace("&lt;&lt;",'&laquo;',$string);
             $string = str_replace("&gt;&gt;",'&raquo;',$string);
 			}
-		
 		// Replace entities by values
-		$string = strtr ($string, $this->_HTML_ENTITIES_TRANS);
-		/*
-		probably wrong
-		if (strtoupper($this->cp) == 'UTF-8')
-			{
-			$string = preg_replace_callback(
-				'~&#([0-9]+);~',
-				function ($matches) {
-					return mYLR_unichr($matches[1]);
-				},
-				$string
-				);
-			}
-		*/
+		$string = strtr($string, $this->_HTML_ENTITIES_TRANS);
 		return $string;
 		}
 
@@ -629,7 +631,7 @@ class mYLastRSS
 		
 	function _SourceKIDX($urlPath)
 		{
-		if ((substr($urlPath, 0, 7) == 'http://') OR (substr($urlPath, 0, 8) == 'https://'))
+		if ($this->_sourceIsURL($urlPath))
 			{
 			return md5($urlPath);
 			}
@@ -1063,131 +1065,41 @@ class mYLastRSS
 		{
 		$result = $encStr;
 		$strCP = $this->rsscp;
-        
-		if (strtolower($strCP) === 'utf-8')
+		if ((strtolower($strCP) === 'utf-8') || ($strCP === '') || ($strCP === 'auto'))
             {
-            // replace emojis if utf-8
-            $this->_InitEmojisArray();
-			$result=str_replace('©','&copy;',$result);
-			$result=str_replace('▪︎','-',$result); // emoji petit carre noir
-       		$result = strtr($result, $this->_EMOJIS_TRANS);
-			$result=str_replace('​','',$result); // ZWSP U+200B espace sans chasse
-			$result=str_replace('È','&Egrave;',$result); // � ou E avec diacritic &#768;
-            }
-		
-		// If code page is set convert character encoding to required
-		if (strtoupper($this->cp) == 'UTF-8')
-			{
-			if (in_array(strtoupper($strCP), $this->_ANSI_ENCODINGS))
+			if ((strtoupper($this->cp) !== 'UTF-8') || ($this->stripEmojis === true))
 				{
-				$result=str_replace('�','&euro;',$result);
-				$result=str_replace('�','&szlig;',$result);
-				$result = $this->encodeIso8859ToUtf8($result);
+				// replace emojis if utf-8
+				$this->_InitEmojisArray();
+				$result = strtr($result, $this->_EMOJIS_TRANS);
 				}
-			$result=str_replace(array('’','‘'),"'",$result);
-			$result=str_replace(array('“','”'),'"',$result);
-			$result=str_replace('œ','oe',$result);
-			$result=str_replace('&'.'euro;','€',$result);
-			$result=str_replace('–','-',$result);
-			$result=str_replace('…','...',$result);
+            }
+		if ((strtoupper($this->cp) === 'UTF-8') && (in_array(strtoupper($strCP), $this->_ANSI_ENCODINGS)))
+			{
+			$result=str_replace('�','&euro;',$result);
+			$result=str_replace('�','&szlig;',$result);
+			$result = $this->encodeIso8859ToUtf8($result);
+			$result=str_replace('&euro;','€',$result);
 			}
-		else if ($this->cp != '')
+		else if ($this->cp !== '')
 			{
 			if(function_exists('mb_convert_encoding'))
 				{
-				if ($strCP == '')
+				if ($strCP === '')
 					{
 					$this->rsscp = $strCP = 'auto';
 					}
-					
-				if (in_array(strtolower($strCP),array('auto','utf-8')))
-					{
-					$result=str_replace(' ‌',' ',$result); //espace ?
-					$result=str_replace('©','&copy;',$result);
-					$result=str_replace('▪︎','*',$result);
-					$result=str_replace(array('€'),'&'.'euro;',$result);
-					$result=str_replace(' ​',' ',$result); //espace fine
-                    $result=str_replace('ç','&ccedil;',$result); // �
-					$result=str_replace('À','&Agrave;',$result); // �
-                    $result=str_replace('è','&egrave;',$result); // �
-                    $result=str_replace('à','&agrave;',$result); // �
-                    $result=str_replace('ù','&ugrave;',$result); // �
-                    $result=str_replace('û','&ucirc;',$result); // �
-					$result=str_replace('–','-',$result);
-					$result=str_replace('−','-',$result);
-					$result=str_replace('̶','-',$result);
-					$result=str_replace('‑','-',$result);
-					$result=str_replace('…','...',$result);
-					$result=str_replace('”','-',$result);
-					$result=str_replace('：',': ',$result);
-					$result=str_replace('｜',' | ',$result);
-					$result=str_replace('⸻','---',$result);
-					$result=str_replace('﻿','',$result); // bom utf8
-					$result=str_replace(' ',' ',$result); //espace insecable ?
-					$result=str_replace(' ',' ',$result); //espace insecable ?
-					$result=str_replace('ᵉ','e',$result); // Lettre modificative minuscule E
-					$result=str_replace('ˢ','s',$result); // Lettre modificative minuscule S
-					$result=str_replace('ă','a',$result); // a avec diacritic breve
-					$result=str_replace('ș','s',$result); // s avec diacritic
-					$result=str_replace('ő','o',$result); // o double accent aigu
-					$result=str_replace('ě','e',$result); // e antiflexe
-					$result=str_replace('ļ','l',$result); // L virgule souscrite
-					$result=str_replace('ñ','n',$result); // n tilde
-					$result=str_replace('Î','&Icirc;',$result); 
-					$result=str_replace('E̝','&Eacute;',$result); // �
-                    $result=str_replace('ê','&ecirc;',$result); // �
-                    $result=str_replace('ë','&euml;',$result); // �
-                    $result=str_replace('ë','&euml;',$result); // �
-					$result=str_replace('e̝','&eacute;',$result); // �
-                    $result=str_replace('â','&acirc;',$result); // �
-                    $result=str_replace('ô','&ocirc;',$result); // �
-                    $result=str_replace('î','&icirc;',$result); // �
-					$result=str_replace('ï','&iuml;',$result); //i trema minuscule
-                    $result=str_replace('î','&icirc;',$result); // �
-                    //$result=str_replace('ù','&ugrave;',$result); // �
-                    //$result=str_replace('ç','&ccedil;',$result); // �
-					$result=str_replace('ğ','g',$result); // g turc avec diacritic
-					$result=str_replace('С','C',$result); // C majuscule bizarre
-					$result=str_replace(array('œ'),'oe',$result);
-					$result=str_replace('ʳ','r',$result); // Lettre modificative minuscule R
-					$result=str_replace('ć','c',$result); // c accent aigu
-					$result=str_replace(array(' ',' ','■'),' ',$result);
-					$result=str_replace(array('’','‘'),"'",$result);
-					$result=str_replace(array('“','”','˝'),'"',$result);
-					$result=str_replace('ĝ','c',$result); // c avec diacritic
-					$result=str_replace('ĝ','a',$result); // a avec diacritic
-					$result=str_replace('ř','r',$result); // lettre R diacrit�e d'un caron
-                    $result=str_replace(' ‪',' ',$result); //espace suivie LEFT-TO-RIGHT EMBEDDING
-					$result=str_replace(' ”',' ',$result); //espace suivie liant sans chasse
-					$result=str_replace(' ❠',' ',$result); //espace fine ?
-					}
-				
 				$result = @mb_convert_encoding($result, $this->cp, $strCP);
-				
-				$result=str_replace('�','oe',$result);
-				$result=str_replace('�','OE',$result);
-				
-				if (in_array(strtoupper($this->cp), $this->_ANSI_ENCODINGS))
-					{
-                    $result = str_replace('�',' ',$result); // Espace etrange, insecable en ANSI ?
-					$result=str_replace(array('�','�'),"'",$result);
-					$result=str_replace(array('˝'),'"',$result);
-					}
 				}
 			else if (function_exists('iconv'))
 				{
-				if ($strCP == 'auto')
+				if ($strCP === 'auto')
 					{
 					$this->rsscp = $strCP = '';
 					}
 				$result = @iconv($strCP, $this->cp.'//TRANSLIT', $result);
 				}
-			else
-				{
-				// Do nothing :o(
-				}
 			}
-		
 		return $result;
 		}
 		
@@ -1250,12 +1162,13 @@ class mYLastRSS
 		
 	function _sourceIsURL($rss_url)
 		{
-		if (substr($rss_url, 0, 7) === 'http://') return TRUE;
-		if (substr($rss_url, 0, 8) === 'https://') return TRUE;
-		return FALSE;
+		if (is_string($rss_url) === false) return false;
+		if (strtolower(substr($rss_url, 0, 8)) === 'https://') return true;
+		if (strtolower(substr($rss_url, 0, 7)) === 'http://') return true;
+		return false;
 		}
 		
-	function _getSourceClientOptions($rss_url,$source_kidx='')
+	function _getSourceClientOptions($rss_url, $source_kidx = '')
 		{
 		$options = array();
 		
@@ -1265,6 +1178,15 @@ class mYLastRSS
 			{
 			$options['time-out'] = $this->timeOut;
 			}
+		if ($this->userAgent !== '')
+			{
+			$options['user-agent'] = $this->userAgent;
+			}
+		if ($this->cache_dir != '')
+			{
+			$options['temp-dir'] = $this->cache_dir;
+			}
+			
 			
 		if ('' === trim($options['transport']))
 			{
@@ -1283,23 +1205,15 @@ class mYLastRSS
 				}
 			}
 		
-		if (FALSE === $this->_sourceIsURL($rss_url))
+		if (false === $this->_sourceIsURL($rss_url))
 			{
 			$options['transport'] = 'fopen';
 			unset($options['time-out']);
+			unset($options['user-agent']);
 			}
 			
 		$this->_SOURCES[$source_kidx]['client'] = $options;
 		
-		if ($this->userAgent !== '')
-			{
-			$options['user-agent'] = $this->userAgent;
-			}
-		if ($this->cache_dir != '')
-			{
-			$options['temp-dir'] = $this->cache_dir;
-			}
-			
 		return $options;
 		}
 		
@@ -1324,7 +1238,7 @@ class mYLastRSS
 		$error_content_file = $this->cache_errors_dir.'/'.$errorFilename;
 		
 		$this->rsscp = ''; 
-		$client = new mYLR_Client($this->_getSourceClientOptions($rss_url,$source_kidx));
+		$client = new mYLR_Client($this->_getSourceClientOptions($rss_url, $source_kidx));
 		if ($this->_sourceIsURL($rss_url))
 			{
 			$this->_QUERY_COUNT++;
@@ -1367,20 +1281,23 @@ class mYLastRSS
 		// Create header chunk to detect format
 		$rss_content_chunk = trim(strtolower(substr($rss_content,0,350)));
 		// Parse document encoding
-		if (strpos($rss_content_chunk,'<?xml') !== false)
-			{
-			preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content_chunk, $out_encoding);
-			if (isset($out_encoding[1]))
-				{ 
-				$this->rsscp = trim($out_encoding[1]); 
-				}
-			}
+		$this->rsscp = $client->getCharset(); 
 		if ($this->rsscp === '')
 			{
-			$this->rsscp = $this->default_cp;
-			$this->_LAST_ERROR_MESSAGES[] = "Encoding not found from '$rss_url'";
+			if (strpos($rss_content_chunk,'<?xml') !== false)
+				{
+				preg_match("'\sencoding=[\'\"](.*?)[\'\"]'si", $rss_content_chunk, $out_encoding);
+				if (isset($out_encoding[1]))
+					{ 
+					$this->rsscp = trim($out_encoding[1]); 
+					}
+				}
+			if ($this->rsscp === '')
+				{
+				$this->rsscp = $this->default_cp;
+				$this->_LAST_ERROR_MESSAGES[] = "Encoding not found from '$rss_url'";
+				}
 			}
-
 		
 		if (strlen($rss_content_chunk) == 0)
 			{
@@ -2162,6 +2079,11 @@ class mYLastRSS
 		$result['source_kidx'] 		= $source_kidx;
 		$result['feed_format'] 		= 'sitemap';
 		$result['generator'] 		= '';
+        if ($this->rsscp === '')
+            {
+            // Sitemap protocole say "file itself must be UTF-8 encoded".
+            $this->rsscp = 'UTF-8';
+            }
 		$result['encoding'] 		= $this->rsscp;
 		
 		// detect extension namespaces
@@ -3090,7 +3012,7 @@ class mYLR_Client
 	{
 	/* Private properties */
 	
-	var $_source				 = '';
+	var $_source				 = ''; // url or file path
 	var $_transport_name		 = '';
 	var $_transport_class_name	 = '';
 	var $_transport				 = null;
@@ -3180,7 +3102,7 @@ class mYLR_Client
 	function getContent($source = '')
 		{
 		$this->_source = $source;
-		$raw_content = $this->_transport->getContent($source);
+		$raw_content = $this->_transport->getContent($this->_source, ($this->isHttpSource() ? 'http' : 'file'));
 		if ($this->isTimedOut())
 			{
 			return '';
@@ -3192,6 +3114,14 @@ class mYLR_Client
 		);
 		*/
 		return $raw_content;
+		}
+		
+	function isHttpSource()
+		{
+		if (is_string($this->_source) === false) return false;
+		if (strtolower(substr($this->_source, 0, 8)) === 'https://') return true;
+		if (strtolower(substr($this->_source, 0, 7)) === 'http://') return true;
+		return false;
 		}
 		
 	function isTimedOut()
@@ -3206,6 +3136,21 @@ class mYLR_Client
 	function getStatusCode()
 		{
 		return intval($this->_transport->getStatusCode(),10);
+		}
+		
+	function getContentType()
+		{
+        return $this->_transport->getContentType();
+		}
+		
+	function getCharset()
+		{
+		$contentType = $this->getContentType();
+		if ($contentType === '') return '';
+		$contentType = str_ireplace(['; charset=', ';charset='], ';charset=', $contentType);
+		$contentTypeParts = explode(';charset=', $contentType);
+		if (count($contentTypeParts) < 2) return '';
+		return trim($contentTypeParts[1]);
 		}
 		
 	function getLastErrorMessage()
@@ -3233,6 +3178,10 @@ class mYLR_Transport_FOpen
 	/* Private properties */
 	
 	var $_last_error_message				 = '';
+	var $_time_out							 = null;
+	var $_user_agent						 = null;
+	var $_is_timed_out						 = false;
+	var $_content_type						 = '';
 	
 	/* Constructor */
 	
@@ -3243,21 +3192,72 @@ class mYLR_Transport_FOpen
 	
 	function mYLR_Transport_FOpen($options = array())
 		{
+		if (is_array($options))
+			{
+			if (isset($options['time-out']) && (0 < $options['time-out']))
+				{
+				$this->_time_out = max(6, intval($options['time-out'], 10));
+				}
+			if (isset($options['user-agent']) && is_string($options['user-agent']) && ('' !== trim($options['user-agent'])))
+				{
+				$this->_user_agent = trim($options['user-agent']);
+				}
+			}
 		}
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		$streamOptions = [];
+		if ($mode === 'http')
+			{
+			$streamOptions = [
+				'http' => [
+					'method' => 'GET',
+					'header'  => 'Accept-Encoding:' . "\r\n",
+					],
+				'https' => [
+					'method' => 'GET',
+					'header'  => 'Accept-Encoding:' . "\r\n",
+					]
+				];
+			if ($this->_user_agent !== null)
+				{
+				$streamOptions['http']['user_agent'] = $this->_user_agent;
+				$streamOptions['https']['user_agent'] = $this->_user_agent;
+				}
+			if ($this->_time_out !== null)
+				{
+				$streamOptions['http']['timeout'] = $this->_time_out;
+				$streamOptions['https']['timeout'] = $this->_time_out;
+				}
+			}
+		$streamContext = stream_context_create($streamOptions);
 		$raw_content = ''; 
-		if ($f = @fopen($source, 'rb'))
+		if ($f = @fopen($source, 'rb', false, $streamContext))
 			{ 
+			if ($this->_time_out !== null)
+				{
+				stream_set_timeout($f, $this->_time_out, 0);
+				}
             while (!feof($f))
 				{ 
                 $raw_content .= fgets($f, 4096); 
             	}
+			$streamMeta = stream_get_meta_data($f);
             fclose($f); 
-			}
+			if ($streamMeta['timed_out'] === true)
+				{
+				$this->_is_timed_out = true;
+				$this->_last_error_message = 'fopen() timed out';
+				return '';
+				} 
+			if (($streamMeta['wrapper_type'] === 'http') && isset($streamMeta['wrapper_data']) && is_array($streamMeta['wrapper_data']))
+				{
+				$this->parseStreamHttpData($streamMeta['wrapper_data']);
+				} 
+  			}
 		else
 			{
 			$this->_last_error_message = 'Failed to fopen()';
@@ -3266,14 +3266,31 @@ class mYLR_Transport_FOpen
 		return $raw_content;
 		}
 		
+	function parseStreamHttpData($data)
+		{
+		foreach($data as $line)
+			{
+			if (stripos($line, 'Content-Type:') === 0)
+				{
+				$this->_content_type = trim(substr($line, 13));
+				continue;
+				}
+			}
+		}
+		
 	function isTimedOut()
 		{
-		return FALSE;
+		return $this->_is_timed_out;
 		}
 		
 	function getStatusCode()
 		{
 		return 0;
+		}
+		
+	function getContentType()
+		{
+        return $this->_content_type;
 		}
 		
 	function getLastErrorMessage()
@@ -3335,8 +3352,9 @@ class mYLR_Transport_Snoopy
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		if ($mode !== 'http') return '';
 		$raw_content = '';
 		if (@$this->_snoopy->fetch($source))
 			{
@@ -3365,6 +3383,11 @@ class mYLR_Transport_Snoopy
 	function getStatusCode()
 		{
 		return $this->_snoopy->response_code;
+		}
+		
+	function getContentType()
+		{
+        return '';
 		}
 		
 	function getLastErrorMessage()
@@ -3401,7 +3424,7 @@ class mYLR_Transport_Requests
 		);
 	var $_response					 = null;
 	var $_last_error_message		 = '';
-	var $_is_timed_out				 = FALSE;
+	var $_is_timed_out				 = false;
 		
 	/* Constructor */
 	
@@ -3430,8 +3453,9 @@ class mYLR_Transport_Requests
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		if ($mode !== 'http') return '';
 		$className = '\Requests';
 		$raw_content = '';
 		try
@@ -3468,6 +3492,13 @@ class mYLR_Transport_Requests
 		{
         if ($this->_response === null) return 0;
 		return $this->_response->status_code;
+		}
+		
+	function getContentType()
+		{
+        if ($this->_response === null) return '';
+        if ($this->_response->headers['content-type'] === null) return '';
+		return $this->_response->headers['content-type'];
 		}
 		
 	function getLastErrorMessage()
@@ -3556,8 +3587,9 @@ class mYLR_Transport_WpRequests
 	
 	/* Public methods */
 	
-	function getContent($source = '')
+	function getContent($source = '', $mode = '')
 		{
+		if ($mode !== 'http') return '';
 		$className = 'WpOrg\Requests\Requests';
 		$raw_content = '';
 		try
@@ -3594,6 +3626,13 @@ class mYLR_Transport_WpRequests
 		{
         if ($this->_response === null) return 0;
 		return $this->_response->status_code;
+		}
+		
+	function getContentType()
+		{
+        if ($this->_response === null) return '';
+        if ($this->_response->headers['content-type'] === null) return '';
+		return $this->_response->headers['content-type'];
 		}
 		
 	function getLastErrorMessage()
@@ -4237,26 +4276,3 @@ function mYLR_StripLastUL($content)
 		}
 	return $content;
 	}
-
-// By Miguel Perez
-// http://fr.php.net/manual/fr/function.chr.php#77911
-// probably wrong
-/*
-function mYLR_unichr($c)
-	{
-        if ($c <= 0x7F) {
-            return chr($c);
-        } else if ($c <= 0x7FF) {
-            return chr(0xC0 | $c >> 6) . chr(0x80 | $c & 0x3F);
-        } else if ($c <= 0xFFFF) {
-            return chr(0xE0 | $c >> 12) . chr(0x80 | $c >> 6 & 0x3F)
-                                        . chr(0x80 | $c & 0x3F);
-        } else if ($c <= 0x10FFFF) {
-            return chr(0xF0 | $c >> 18) . chr(0x80 | $c >> 12 & 0x3F)
-                                        . chr(0x80 | $c >> 6 & 0x3F)
-                                        . chr(0x80 | $c & 0x3F);
-        } else {
-            return false;
-        }
-	}
-*/
